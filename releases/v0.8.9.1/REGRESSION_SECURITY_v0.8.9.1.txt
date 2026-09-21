@@ -1,0 +1,9 @@
+VXP-Core v0.8.9.1 validation summary
+- JVM/core regression: 38/38 PASS
+- ARM SUB cached/reference/trace + executable-write invalidation: PASS
+- malformed/unsupported: 33/33 PASS under -Xmx96m
+- fuzz-derived deterministic mutations: 8192/8192 PASS
+- catastrophic process exits: 0
+- deduplicated failure clusters: 0
+- Kotlin-only check: PASS
+- clean-room runtime source check: PASS

@@ -1,0 +1,12 @@
+TRIAL index=0 ms=4238.902 mips=48.456 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=1 ms=4078.242 mips=50.365 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=2 ms=4086.029 mips=50.269 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=3 ms=4043.224 mips=50.801 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+RESULT version=0.8.8.3 medianWarmMips=50.365 medianWarmMs=4078.242 equivalentFps=9.808 signature=40/205398835/39/37/false
+TRIAL index=0 ms=3338.022 mips=61.533 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=1 ms=3176.664 mips=64.659 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=2 ms=3156.685 mips=65.068 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=3 ms=3198.687 mips=64.213 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+RESULT version=0.8.9 medianWarmMips=64.659 medianWarmMs=3176.664 equivalentFps=12.592 signature=40/205398835/39/37/false
+PERF_GATE baselineMips=50.365 candidateMips=64.659 speedupPct=28.38 minPct=20.00
+PASS fixed-frame semantic + performance gate

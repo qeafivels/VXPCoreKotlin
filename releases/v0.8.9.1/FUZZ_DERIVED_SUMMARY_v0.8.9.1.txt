@@ -1,0 +1,10 @@
+FUZZ_DERIVED_GATE
+rounds=32
+cases_per_round=256
+total_cases=8192
+chunk_rounds=4
+chunk_timeout_sec=30
+master_seed=6221811148222257714
+heap=-Xms16m/-Xmx96m
+catastrophic_process_exits=0
+dedup_failure_clusters=0

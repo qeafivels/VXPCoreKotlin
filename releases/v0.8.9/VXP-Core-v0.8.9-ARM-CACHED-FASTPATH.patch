@@ -1,0 +1,157 @@
+--- a/vxp-core/src/main/kotlin/vxpcore/ArmCpu.kt
++++ b/vxp-core/src/main/kotlin/vxpcore/ArmCpu.kt
+@@ -296,13 +296,13 @@
+                     faultPc = startPc
+                     faultThumb = false
+                     val write0 = decodeCache.armMayWriteMemory(slot, 0)
+-                    stepArmDecoded(startPc, decodeCache.armOpcode(slot, 0), decodeCache.armKind(slot, 0))
++                    stepArmCachedDecoded(startPc, decodeCache.armOpcode(slot, 0), decodeCache.armKind(slot, 0))
+                     executed = 1
+                     val invalidated0 = write0 && memory.executableGeneration() != generation
+                     if (!invalidated0 && length == 2 && !thumb && r[15] == startPc + 4 && !halted && !runtime.exitRequested) {
+                         faultPc = startPc + 4
+                         val write1 = decodeCache.armMayWriteMemory(slot, 1)
+-                        stepArmDecoded(startPc + 4, decodeCache.armOpcode(slot, 1), decodeCache.armKind(slot, 1))
++                        stepArmCachedDecoded(startPc + 4, decodeCache.armOpcode(slot, 1), decodeCache.armKind(slot, 1))
+                         executed = 2
+                         if (write1 && memory.executableGeneration() != generation) lastArmBlockSlot = -1
+                     }
+@@ -312,7 +312,7 @@
+                         faultPc = expectedPc
+                         faultThumb = false
+                         val mayWriteMemory = decodeCache.armMayWriteMemory(slot, executed)
+-                        stepArmDecoded(expectedPc, decodeCache.armOpcode(slot, executed), decodeCache.armKind(slot, executed))
++                        stepArmCachedDecoded(expectedPc, decodeCache.armOpcode(slot, executed), decodeCache.armKind(slot, executed))
+                         executed++
+                         if (mayWriteMemory && memory.executableGeneration() != generation) break
+                         expectedPc += 4
+@@ -331,6 +331,129 @@
+         }
+     }
+ 
++    /**
++     * JIT-friendly cached ARM dispatcher. BasicBlockDecodeCache has already excluded
++     * instruction families that overlap generic ALU/load-store encodings, so the hot
++     * cached path can jump directly to compact semantic helpers. Rare/complex ARM
++     * instructions continue through stepArmDecoded(), preserving the reference path.
++     */
++    private fun stepArmCachedDecoded(pc: Int, insn: Int, decodeKind: Int) {
++        when (decodeKind) {
++            BasicBlockDecodeCache.ARM_BLX_IMM -> armCachedBlxImmediate(pc, insn)
++            BasicBlockDecodeCache.ARM_BRANCH -> armCachedBranch(pc, insn)
++            BasicBlockDecodeCache.ARM_SINGLE_DATA -> armCachedSingleData(pc, insn)
++            BasicBlockDecodeCache.ARM_DATA_PROCESSING -> armCachedDataProcessing(pc, insn)
++            else -> stepArmDecoded(pc, insn, decodeKind)
++        }
++    }
++
++    private fun armCachedConditionStart(pc: Int, insn: Int): Boolean {
++        r[15] = pc + 4
++        val cond = insn ushr 28
++        return cond == 14 || conditionPassed(cond)
++    }
++
++    private fun armCachedBlxImmediate(pc: Int, insn: Int) {
++        r[15] = pc + 4
++        var imm24 = insn and 0x00ffffff
++        if ((imm24 and 0x00800000) != 0) imm24 = imm24 or 0xff000000.toInt()
++        val h = (insn ushr 24) and 1
++        r[14] = pc + 4
++        thumb = true
++        r[15] = (pc + 8 + (imm24 shl 2) + (h shl 1)) and -2
++    }
++
++    private fun armCachedBranch(pc: Int, insn: Int) {
++        if (!armCachedConditionStart(pc, insn)) return
++        var imm24 = insn and 0x00ffffff
++        if ((imm24 and 0x00800000) != 0) imm24 = imm24 or 0xff000000.toInt()
++        if ((insn and 0x01000000) != 0) r[14] = pc + 4
++        r[15] = pc + 8 + (imm24 shl 2)
++    }
++
++    private fun armCachedSingleData(pc: Int, insn: Int) {
++        if (!armCachedConditionStart(pc, insn)) return
++        val i = (insn and (1 shl 25)) != 0
++        val p = (insn and (1 shl 24)) != 0
++        val u = (insn and (1 shl 23)) != 0
++        val byte = (insn and (1 shl 22)) != 0
++        val w = (insn and (1 shl 21)) != 0
++        val load = (insn and (1 shl 20)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val rd = (insn ushr 12) and 0xf
++        val offset = if (!i) {
++            insn and 0xfff
++        } else {
++            decodeShiftedRegister(insn and 0xfff, pc)
++            shiftResult
++        }
++        val base = if (rn == 15) pc + 8 else r[rn]
++        val adjusted = if (u) base + offset else base - offset
++        val addr = if (p) adjusted else base
++        if (load) {
++            val value = if (byte) memory.read8(addr) else memory.read32(addr)
++            if (rd == 15) {
++                thumb = (value and 1) != 0
++                r[15] = value and -2
++            } else r[rd] = value
++        } else {
++            val value = if (rd == 15) pc + 12 else r[rd]
++            if (byte) memory.write8(addr, value) else memory.write32(addr, value)
++        }
++        if (!p || w) r[rn] = adjusted
++    }
++
++    private fun armCachedDataProcessing(pc: Int, insn: Int) {
++        if (!armCachedConditionStart(pc, insn)) return
++        val immediate = (insn and (1 shl 25)) != 0
++        val opcode = (insn ushr 21) and 0xf
++        val setFlags = (insn and (1 shl 20)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val rd = (insn ushr 12) and 0xf
++        val op1 = if (rn == 15) pc + 8 else r[rn]
++        if (immediate) decodeImmediate(insn) else decodeShiftedRegister(insn and 0xfff, pc)
++        val op2 = shiftResult
++        val shCarry = shiftCarry
++        when (opcode) {
++            0 -> writeDp(rd, op1 and op2, setFlags, shCarry)
++            1 -> writeDp(rd, op1 xor op2, setFlags, shCarry)
++            2 -> { val result = op1 - op2; writeDp(rd, result, setFlags, carrySub(op1, op2), overflowSub(op1, op2, result)) }
++            3 -> { val result = op2 - op1; writeDp(rd, result, setFlags, carrySub(op2, op1), overflowSub(op2, op1, result)) }
++            4 -> { val result = op1 + op2; writeDp(rd, result, setFlags, carryAdd(op1, op2), overflowAdd(op1, op2, result)) }
++            5 -> {
++                val carryIn = if (c) 1 else 0
++                val unsigned = op1.toUInt().toLong() + op2.toUInt().toLong() + carryIn.toLong()
++                val signed = op1.toLong() + op2.toLong() + carryIn.toLong()
++                val result = unsigned.toInt()
++                writeDp(rd, result, setFlags, unsigned > 0xffffffffL, signed > Int.MAX_VALUE.toLong() || signed < Int.MIN_VALUE.toLong())
++            }
++            6 -> {
++                val borrow = if (c) 0 else 1
++                val subtrahend = op2.toUInt().toLong() + borrow.toLong()
++                val unsignedA = op1.toUInt().toLong()
++                val signed = op1.toLong() - op2.toLong() - borrow.toLong()
++                val result = (unsignedA - subtrahend).toInt()
++                writeDp(rd, result, setFlags, unsignedA >= subtrahend, signed > Int.MAX_VALUE.toLong() || signed < Int.MIN_VALUE.toLong())
++            }
++            7 -> {
++                val borrow = if (c) 0 else 1
++                val subtrahend = op1.toUInt().toLong() + borrow.toLong()
++                val unsignedA = op2.toUInt().toLong()
++                val signed = op2.toLong() - op1.toLong() - borrow.toLong()
++                val result = (unsignedA - subtrahend).toInt()
++                writeDp(rd, result, setFlags, unsignedA >= subtrahend, signed > Int.MAX_VALUE.toLong() || signed < Int.MIN_VALUE.toLong())
++            }
++            8 -> { val result = op1 and op2; setNZ(result); c = shCarry }
++            9 -> { val result = op1 xor op2; setNZ(result); c = shCarry }
++            10 -> { val result = op1 - op2; setNZ(result); c = carrySub(op1, op2); v = overflowSub(op1, op2, result) }
++            11 -> { val result = op1 + op2; setNZ(result); c = carryAdd(op1, op2); v = overflowAdd(op1, op2, result) }
++            12 -> writeDp(rd, op1 or op2, setFlags, shCarry)
++            13 -> writeDp(rd, op2, setFlags, shCarry)
++            14 -> writeDp(rd, op1 and op2.inv(), setFlags, shCarry)
++            15 -> writeDp(rd, op2.inv(), setFlags, shCarry)
++        }
++    }
++
+     /**
+      * JIT-friendly cached Thumb dispatcher. The full Thumb decoder is intentionally large
+      * because it preserves all rare instruction families. Cached basic blocks already carry
