@@ -66,6 +66,22 @@ Bản này bổ sung ARM cached fast path cho LDM/STM, word LDR/STR immediate/re
 
 Mốc này **không** được mô tả là tương thích 100% với mọi file VXP/MRE; compatibility chỉ được khẳng định trong phạm vi corpus và release gates đã kiểm thử.
 
+## 1.3 Mốc lịch sử — v0.8.8.4
+
+**v0.8.8.4 — ARM/LUA-HOTBLOCK** được giữ lại như một mốc performance lịch sử trước v0.8.9/v0.8.9.1. Release artifacts nằm tại `releases/v0.8.8.4/`.
+
+Trên Chetaslua SHA-256 `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85`:
+
+- Fixed-work: **40 frames / 205.398.835 instructions / 39 events / 37 timers**, không đổi.
+- Warm median: **49,097 → 63,389 MIPS (+29,11%)**.
+- FPS-equivalent fixed-work: **9,561 → 12,345 (+29,12%)**.
+- Wall time 40 frame: **4183,567 → 3240,267 ms (-22,55%)**.
+- Continuous gate 1,8 giây: **15,00 median FPS**, **15,56 p95**, PASS.
+- JVM regression: **37/37 PASS**.
+- Malformed/unsupported: **33/33 PASS**.
+- Clean-room/Kotlin-only: **PASS**.
+- Full fuzz-derived 8.192 case **không chạy lại** trong lượt re-version này.
+
 ## 2. Module chung
 
 | Module | Vai trò |

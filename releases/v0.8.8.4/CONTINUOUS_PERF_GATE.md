@@ -1,28 +1,42 @@
 # VXP-Core v0.8.8.4 — Chetaslua continuous performance gate
 
-This release-preparation step adds a repeatable private-corpus performance gate before further runtime changes are promoted.
-
 ## Target workload
 
 - Profile: Chetaslua
 - SHA-256: `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85`
 - Format: ELF32 ARM EABI5 PIE
-- v0.8.8.3 smoke baseline: 11 frames / 86,438,337 guest instructions in the recorded 1.8 s path.
-- Binary inspection shows a Lua-heavy workload with `luaV_execute`, timer/event callbacks and framebuffer flush functions.
+- Binary is user-supplied and is not committed.
 
-The title binary is intentionally not committed. CI receives it from a private URL configured as `PERF_CORPUS_URL`, verifies the exact SHA-256, and then executes the configured runtime command.
+## Completed v0.8.8.4 validation
 
-## Gate behavior
+Two warm-ups plus seven measured 1.8-second policy runs:
 
-1. Two warm-up runs.
-2. Seven measured runs by default.
-3. Runner emits a JSON metrics object on its last stdout line.
-4. Gate computes median FPS, p95 FPS, median MIPS and median guest instructions when available.
-5. Default release floor is no more than 3% median-FPS regression from the checked-in v0.8.8.3 baseline.
-6. Every result is uploaded as a GitHub Actions artifact.
+- measured frames: `26, 26, 28, 27, 26, 28, 27`
+- median FPS: **15.00**
+- p95 FPS: **15.56**
+- median guest instructions: **143,008,808**
+- result: **PASS**
 
-## Optimization direction after this gate
+The historical CI regression baseline is advanced from v0.8.8.3 to **v0.8.8.4 / 27 frames / 1.8 s**. Newer validated releases remain documented separately.
 
-Chetaslua did not improve in the v0.8.8.3 Thumb-only optimization, so the next runtime patch should be profile-driven around ARM cached execution, Lua VM hot-block dispatch, callback overhead, framebuffer flush cadence and GC/allocation pressure.
+## Deterministic fixed-work A/B
 
-Do not claim an FPS improvement for v0.8.8.4 until the continuous gate produces repeatable measurements on the same corpus and host class.
+Same host/JVM and exact 40-frame work signature:
+
+- v0.8.8.3: **49.097 MIPS / 9.561 equivalent FPS**
+- v0.8.8.4: **63.389 MIPS / 12.345 equivalent FPS**
+- delta: **+29.11% MIPS / +29.12% FPS**
+- wall time: **4183.567 → 3240.267 ms (-22.55%)**
+
+Semantic signature:
+`40 frames / 205,398,835 instructions / 39 events / 37 timers / timeout=false`.
+
+## Correctness gates
+
+- JVM regression: **37/37 PASS**
+- fixed malformed/unsupported: **33/33 PASS**
+- clean-room: **PASS**
+- Kotlin-only: **PASS**
+- full 8,192-case fuzz-derived endurance was not rerun in this re-versioning pass.
+
+See `ARM_LUA_HOTBLOCK_v0.8.8.4_REPORT.md`.

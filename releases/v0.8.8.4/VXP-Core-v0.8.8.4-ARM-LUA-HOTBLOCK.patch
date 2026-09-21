@@ -1,0 +1,937 @@
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/BRANCH_INFO.txt /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/BRANCH_INFO.txt
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/BRANCH_INFO.txt	2026-09-20 10:19:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/BRANCH_INFO.txt	2026-09-21 13:27:01.778743958 +0000
+@@ -1,7 +1,7 @@
+-branch=release/v0.8.8.3-thumb-jit-fastpath
+-base=v0.8.8.2-FUZZ-DERIVED-GATE
+-version=0.8.8.3
+-focus=JIT-friendly cached Thumb execution fast path
++branch=release/v0.8.8.4-arm-lua-hotblock
++base=v0.8.8.3-THUMB-JIT-FASTPATH
++version=0.8.8.4
++focus=ARM/Lua hot-block JIT-friendly cached fast path + continuous Chetaslua performance gate
+ clean_room=true
+ kotlin_only=true
+ security_gate=fixed-malformed+fuzz-derived
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/BRANCH_NOTES.md /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/BRANCH_NOTES.md
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/BRANCH_NOTES.md	2026-09-20 10:23:59.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/BRANCH_NOTES.md	2026-09-21 13:35:08.199195639 +0000
+@@ -1,14 +1,13 @@
+-# v0.8.8.3 — THUMB-JIT-FASTPATH
++# v0.8.8.4 — ARM/LUA-HOTBLOCK
+ 
+-Base: **v0.8.8.2 FUZZ-DERIVED-GATE**.
++Base: **v0.8.8.3 THUMB-JIT-FASTPATH**.
+ 
+-This release is a profile-driven interpreter optimization. Cached Thumb blocks now classify common high-register, load/store, stack and multi-register families explicitly and route already-decoded instructions through small JIT-friendly helpers instead of re-entering the monolithic Thumb decoder on every instruction. Rare/unsupported paths still use the full decoder, preserving diagnostics and compatibility semantics.
++This release specializes common cached ARM instruction families used heavily by Lua VM dispatch while retaining the authoritative full decoder for rare paths and debug/single-step behavior.
+ 
+-Release gates:
+-- DIBO fixed 40 frames: exactly 105,863,223 guest instructions.
+-- Median warm DIBO throughput on the validation host: 38.448 -> 45.739 MIPS (+18.96%).
+-- 39/39 JVM regressions PASS.
+-- 33/33 fixed malformed mutations PASS.
+-- 8,192/8,192 deterministic fuzz-derived mutations PASS, 0 failure clusters.
+-- Real-title 1.8 s A/B smoke: DIBO 25 -> 28 frames; Spider-Man 23 -> 24; Fnynn 5 -> 5 with more timer/events; Chetaslua unchanged on the tested heavy-callback path.
+-- Clean-room/Kotlin-only architecture unchanged.
++Validated on Chetaslua SHA-256 `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85`:
++
++- fixed work: 40 frames / 205,398,835 instructions / 39 events / 37 timers;
++- baseline v0.8.8.3: 49.097 warm-median MIPS / 9.561 equivalent FPS;
++- v0.8.8.4 candidate: 63.389 warm-median MIPS / 12.345 equivalent FPS;
++- improvement: +29.11% on the current validation host;
++- clean-room Kotlin-only constraints unchanged.
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/CHANGELOG.md /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/CHANGELOG.md
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/CHANGELOG.md	2026-09-20 10:23:59.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/CHANGELOG.md	2026-09-21 13:35:08.199586710 +0000
+@@ -1,3 +1,13 @@
++# v0.8.8.4 — ARM/LUA-HOTBLOCK / Chetaslua performance gate
++
++- Add JIT-friendly cached ARM dispatcher for ARM-heavy Lua workloads.
++- Split LDM/STM and common word LDR/STR forms into compact cached helpers.
++- Specialize hot ADD/MOV data-processing operations while preserving generic fallback.
++- Preserve executable-write invalidation, timer cadence, callback limits and single-step semantics.
++- Chetaslua fixed-work signature remains 40 frames / 205,398,835 instructions / 39 events / 37 timers.
++- Same-host validation: 49.097 -> 63.389 warm-median MIPS; 9.561 -> 12.345 equivalent FPS (+29.11%).
++- Keep v0.8.8.3 malformed/fuzz security architecture and clean-room Kotlin-only constraints.
++
+ # v0.8.8.3 — THUMB-JIT-FASTPATH / profile-driven interpreter speed
+ 
+ - Split cached Thumb execution away from the monolithic decoder for JIT-friendly hot helpers.
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/README.md /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/README.md
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/README.md	2026-09-20 10:23:59.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/README.md	2026-09-21 13:35:08.199785080 +0000
+@@ -1,4 +1,12 @@
+-# VXP-Core v0.8.8.3 — Thumb JIT Fast Path + Fuzz-Derived Gate
++# VXP-Core v0.8.8.4 — ARM + Thumb JIT-Friendly Cached Fast Paths
++
++## v0.8.8.4 ARM performance release
++
++`v0.8.8.4` extends the cached JIT-friendly execution path to ARM-heavy applications. The cache now distinguishes common ARM LDM/STM, word LDR/STR immediate/register forms, and hot ADD/MOV data-processing instructions, routing them through compact helpers while keeping the full decoder as the compatibility fallback.
++
++The release also adds a generic **fixed-frame A/B performance gate**. It runs the same VXP with a baseline and candidate JAR, verifies an identical guest-work signature (frames/instructions/events/timers), and rejects candidates that fail the configured warm-median MIPS improvement. This prevents performance work from silently changing timer cadence or gameplay semantics.
++
++See `docs/ARM_LUA_HOTBLOCK_v0.8.8.4.md` and `scripts/run_performance_ab_gate.sh`.
+ 
+ ## v0.8.8.3 performance release
+ 
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/docs/ARM_LUA_HOTBLOCK_v0.8.8.4.md /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/docs/ARM_LUA_HOTBLOCK_v0.8.8.4.md
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/docs/ARM_LUA_HOTBLOCK_v0.8.8.4.md	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/docs/ARM_LUA_HOTBLOCK_v0.8.8.4.md	2026-09-21 13:35:08.199714734 +0000
+@@ -0,0 +1,56 @@
++# VXP-Core v0.8.8.4 — ARM/Lua Hot-Block Fast Path
++
++## Goal
++
++Optimize ARM-heavy Lua VXP workloads without changing guest work, timer cadence, framebuffer semantics, callback limits, or security boundaries.
++
++Target used for validation:
++
++- file: `Chetaslua(1).vxp`
++- size: 516,132 bytes
++- SHA-256: `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85`
++- backend: ELF_ARM / ARM EABI5 PIE
++
++The target binary is not included in the repository or release package.
++
++## Profile-driven implementation
++
++v0.8.8.4 extends the v0.8.8.3 cached execution architecture to the ARM-heavy paths exercised by the embedded Lua VM:
++
++- JIT-friendly cached ARM dispatcher rather than re-entering the monolithic ARM decoder for every cached instruction;
++- separate LDM/STM block-transfer decode kinds and compact helpers;
++- word LDR/STR split by immediate/register offset and load/store direction;
++- specialized hot ADD and MOV data-processing paths;
++- generic cached single-data/data-processing fallbacks for remaining valid families;
++- full decoder retained for rare/overlapping families, tracing, single-step and compatibility fallback;
++- executable-write invalidation and block termination semantics preserved.
++
++Rejected prior experiments remain rejected: larger 16-instruction blocks and a secondary GuestMemory data MRU did not produce stable median gains.
++
++## Same-host fixed-work A/B validation — 2026-09-21
++
++JVM: OpenJDK 21, `-Xms512m -Xmx512m`. Six trials per side; trial 0 excluded by the benchmark median. Workload stops at exactly 40 framebuffer frames.
++
++Exact semantic signature on every measured run:
++
++`40 frames / 205,398,835 instructions / 39 events / 37 timers / timeout=false`
++
++| Metric | v0.8.8.3 | v0.8.8.4 ARM/Lua | Delta |
++|---|---:|---:|---:|
++| warm median MIPS | 49.097 | **63.389** | **+29.11%** |
++| warm median 40-frame wall time | 4183.567 ms | **3240.267 ms** | **-22.55%** |
++| fixed-work equivalent FPS | 9.561 | **12.345** | **+29.12%** |
++| guest instructions | 205,398,835 | 205,398,835 | exact |
++| frames | 40 | 40 | exact |
++| events | 39 | 39 | exact |
++| timer callbacks | 37 | 37 | exact |
++
++The release criterion is median improvement with an identical work signature, not a single best trial.
++
++## Continuous performance gate
++
++The repository-level `scripts/perf_gate.py` and `.github/workflows/continuous-performance.yml` pin this title by SHA-256, warm the runtime before measurement, aggregate repeated runs and reject configurable FPS regression. The fixed-frame A/B gate in this source package additionally compares baseline and candidate JARs under identical guest work.
++
++## Result
++
++v0.8.8.4 is accepted as an ARM/Lua hot-block performance release only because it improves the measured fixed-work FPS while preserving the exact guest-work signature. No timer-speed hack or gameplay acceleration is used.
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/scripts/run_fuzz_derived_gate.sh /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/scripts/run_fuzz_derived_gate.sh
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/scripts/run_fuzz_derived_gate.sh	2026-09-20 10:19:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/scripts/run_fuzz_derived_gate.sh	2026-09-21 13:27:01.767161669 +0000
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+-JAR="${1:-$ROOT/dist/vxp-core-0.8.8.3.jar}"
++JAR="${1:-$ROOT/dist/vxp-core-0.8.8.4.jar}"
+ ROUNDS="${FUZZ_ROUNDS:-32}"
+ CASES="${FUZZ_CASES_PER_ROUND:-256}"
+ CHUNK="${FUZZ_CHUNK_ROUNDS:-4}"
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/scripts/run_malformed_fixed_gate.sh /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/scripts/run_malformed_fixed_gate.sh
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/scripts/run_malformed_fixed_gate.sh	2026-09-20 10:19:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/scripts/run_malformed_fixed_gate.sh	2026-09-21 13:27:01.767063591 +0000
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+-JAR="${1:-$ROOT/dist/vxp-core-0.8.8.3.jar}"
++JAR="${1:-$ROOT/dist/vxp-core-0.8.8.4.jar}"
+ TEST_JAR="${2:-$ROOT/build/malformed-security-tests.jar}"
+ if [[ ! -f "$JAR" ]]; then echo "missing core jar: $JAR" >&2; exit 2; fi
+ mkdir -p "$ROOT/build"
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/scripts/run_performance_ab_gate.sh /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/scripts/run_performance_ab_gate.sh
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/scripts/run_performance_ab_gate.sh	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/scripts/run_performance_ab_gate.sh	2026-09-21 06:00:23.000000000 +0000
+@@ -0,0 +1,68 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT="$(cd "$(dirname "$0")/.." && pwd)"
++BASELINE_JAR="${1:?baseline jar required}"
++CANDIDATE_JAR="${2:?candidate jar required}"
++VXP_FILE="${3:?VXP file required}"
++
++FRAMES="${PERF_FRAMES:-40}"
++TRIALS="${PERF_TRIALS:-6}"
++CALLBACK_BUDGET="${PERF_CALLBACK_BUDGET:-20000000}"
++MIN_SPEEDUP_PCT="${PERF_MIN_SPEEDUP_PCT:-2.0}"
++JVM_XMS="${PERF_JVM_XMS:-512m}"
++JVM_XMX="${PERF_JVM_XMX:-512m}"
++
++BUILD_DIR="$ROOT/build/perf-gate"
++BENCH_JAR="$BUILD_DIR/fixed-frame-performance.jar"
++mkdir -p "$BUILD_DIR"
++
++kotlinc \
++  -language-version 2.0 \
++  -Xskip-prerelease-check \
++  -Xallow-unstable-dependencies \
++  -cp "$CANDIDATE_JAR" \
++  "$ROOT/tests/jvm/FixedFramePerformanceBenchmark.kt" \
++  -include-runtime \
++  -d "$BENCH_JAR"
++
++run_one() {
++  local jar="$1"
++  local label="$2"
++  local out="$BUILD_DIR/$label.txt"
++  java -Xms"$JVM_XMS" -Xmx"$JVM_XMX" \
++    -cp "$jar:$BENCH_JAR" \
++    vxpcore.FixedFramePerformanceBenchmarkKt \
++    "$VXP_FILE" "$FRAMES" "$TRIALS" "$CALLBACK_BUDGET" | tee "$out"
++}
++
++run_one "$BASELINE_JAR" baseline
++run_one "$CANDIDATE_JAR" candidate
++
++python3 - "$BUILD_DIR/baseline.txt" "$BUILD_DIR/candidate.txt" "$MIN_SPEEDUP_PCT" <<'PY'
++import re, sys
++base_path, cand_path, min_pct = sys.argv[1], sys.argv[2], float(sys.argv[3])
++
++def result(path):
++    text = open(path, encoding="utf-8").read()
++    lines = [x for x in text.splitlines() if x.startswith("RESULT ")]
++    if len(lines) != 1:
++        raise SystemExit(f"missing unique RESULT in {path}")
++    line = lines[0]
++    def grab(name):
++        m = re.search(rf"\b{name}=([^\s]+)", line)
++        if not m:
++            raise SystemExit(f"missing {name} in {path}")
++        return m.group(1)
++    return float(grab("medianWarmMips")), grab("signature"), line
++
++base_mips, base_sig, base_line = result(base_path)
++cand_mips, cand_sig, cand_line = result(cand_path)
++if base_sig != cand_sig:
++    raise SystemExit(f"FAIL semantic signature changed: baseline={base_sig} candidate={cand_sig}")
++speedup = (cand_mips / base_mips - 1.0) * 100.0
++print(f"PERF_GATE baselineMips={base_mips:.3f} candidateMips={cand_mips:.3f} speedupPct={speedup:.2f} minPct={min_pct:.2f}")
++if speedup + 1e-9 < min_pct:
++    raise SystemExit("FAIL candidate did not meet minimum speedup")
++print("PASS fixed-frame semantic + performance gate")
++PY
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/scripts/run_release_gate.sh /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/scripts/run_release_gate.sh
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/scripts/run_release_gate.sh	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/scripts/run_release_gate.sh	2026-09-21 13:27:01.766858812 +0000
+@@ -0,0 +1,77 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT="$(cd "$(dirname "$0")/.." && pwd)"
++BASELINE_JAR="${1:?baseline jar required}"
++CANDIDATE_JAR="${2:?candidate jar required}"
++VXP_FILE="${3:?performance VXP required}"
++
++BUILD="$ROOT/build/release-gate"
++mkdir -p "$BUILD"
++
++SELF_TESTS=(
++  AdaptiveCallbackWatchdogRegression.kt
++  ArmClzRegression.kt
++  ArmDoublewordRegression.kt
++  ArmHalfwordMultiplyRegression.kt
++  ArmLongMultiplyRegression.kt
++  ArmPcOperandRegression.kt
++  ArmccRwpiLoaderRegression.kt
++  ArmccStackLaunchRegression.kt
++  AudioRegression.kt
++  BasicBlockDecodeCacheRegression.kt
++  ColorScaleRegression.kt
++  DebugPerformanceOverlayRegression.kt
++  FastGuestCallbackRegression.kt
++  FnynnTimerVibratorRegression.kt
++  FontSizeRegression.kt
++  GifDecoderRegression.kt
++  GraphicsDirectSpanRegression.kt
++  GraphicsQualityRegression.kt
++  GuestHandleRegistryRegression.kt
++  GuestMemoryDirectRegionRegression.kt
++  GuestMemoryFastPathRegression.kt
++  GuestMemoryTwoWayMruRegression.kt
++  HandleResourceLifecycleRegression.kt
++  InBlockSelfModifyRegression.kt
++  InputPriorityRegression.kt
++  PieWritableSectionOverlapRegression.kt
++  PngDecoderRegression.kt
++  RamImageResourceCacheRegression.kt
++  RandRegression.kt
++  RawArmccBootstrapRegression.kt
++  SystemGraphicsFileResourceRegression.kt
++  ThumbAluRegression.kt
++  ThumbBlxRegisterRegression.kt
++  ThumbBlxRegression.kt
++  ThumbHalfwordImmediateRegression.kt
++  ThumbPcSemanticsRegression.kt
++  UnifiedLaunchFacadeRegression.kt
++)
++
++sources=()
++for name in "${SELF_TESTS[@]}"; do sources+=("$ROOT/tests/jvm/$name"); done
++TEST_JAR="$BUILD/self-regression.jar"
++kotlinc -language-version 2.0 -Xskip-prerelease-check -Xallow-unstable-dependencies \
++  -cp "$CANDIDATE_JAR" "${sources[@]}" -include-runtime -d "$TEST_JAR"
++
++pass=0
++for src in "${sources[@]}"; do
++  name="$(basename "$src" .kt)"
++  pkg="$(awk '/^package /{print $2; exit}' "$src")"
++  cls="${name}Kt"
++  if [[ -n "$pkg" ]]; then cls="$pkg.$cls"; fi
++  java -Xmx256m -cp "$CANDIDATE_JAR:$TEST_JAR" "$cls"
++  pass=$((pass + 1))
++done
++echo "[OK] self-contained JVM regression: $pass/${#sources[@]}"
++
++"$ROOT/scripts/run_malformed_fixed_gate.sh" "$CANDIDATE_JAR"
++
++if [[ "${RELEASE_SKIP_FUZZ:-0}" != "1" ]]; then
++  "$ROOT/scripts/run_fuzz_derived_gate.sh" "$CANDIDATE_JAR"
++fi
++
++"$ROOT/scripts/run_performance_ab_gate.sh" "$BASELINE_JAR" "$CANDIDATE_JAR" "$VXP_FILE"
++
++echo "[OK] v0.8.8.4 release gate passed"
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/tests/jvm/FixedFramePerformanceBenchmark.kt /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/tests/jvm/FixedFramePerformanceBenchmark.kt
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/tests/jvm/FixedFramePerformanceBenchmark.kt	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/tests/jvm/FixedFramePerformanceBenchmark.kt	2026-09-21 06:01:43.000000000 +0000
+@@ -0,0 +1,120 @@
++package vxpcore
++
++import java.io.File
++import java.util.Locale
++
++/**
++ * Deterministic fixed-frame performance benchmark for a user-supplied VXP.
++ *
++ * Usage:
++ *   FixedFramePerformanceBenchmarkKt <file.vxp> [frames=40] [trials=6] [maxInstructionsPerCallback=20000000]
++ *
++ * Trial 0 is a JVM warm-up trial. RESULT reports medians over trials 1..N-1.
++ * Every trial must produce the exact same guest-work signature.
++ */
++fun main(args: Array<String>) {
++    Locale.setDefault(Locale.US)
++    val vxpFile = File(requireNotNull(args.getOrNull(0)) {
++        "usage: <file.vxp> [frames=40] [trials=6] [maxInstructionsPerCallback=20000000]"
++    })
++    val targetFrames = args.getOrNull(1)?.toInt() ?: 40
++    val trials = args.getOrNull(2)?.toInt() ?: 6
++    val callbackBudget = args.getOrNull(3)?.toLong() ?: 20_000_000L
++    require(targetFrames > 0)
++    require(trials >= 3) { "at least 3 trials are required" }
++    require(callbackBudget > 0)
++
++    val bytes = vxpFile.readBytes()
++    val prepared = VxpCoreLibrary.prepare(bytes)
++    require(prepared.backend == VxpBackendType.ELF_ARM) {
++        "fixed-frame ARM benchmark requires ELF_ARM, got ${prepared.backend}"
++    }
++
++    data class Trial(
++        val ms: Double,
++        val mips: Double,
++        val frames: Long,
++        val instructions: Long,
++        val events: Long,
++        val timers: Long,
++        val timedOut: Boolean
++    ) {
++        fun signature(): String = "$frames/$instructions/$events/$timers/$timedOut"
++    }
++
++    val results = ArrayList<Trial>(trials)
++    repeat(trials) { trial ->
++        val storage = File(
++            System.getProperty("java.io.tmpdir"),
++            "vxp-perf-${vxpFile.nameWithoutExtension}-$trial"
++        ).apply {
++            deleteRecursively()
++            mkdirs()
++        }
++        val engine = VxpCoreEngine(storage)
++        var seenFrames = 0
++        val start = System.nanoTime()
++        val result = engine.runPrepared(
++            prepared = prepared,
++            fileName = vxpFile.name,
++            maxInstructionsPerCallback = callbackBudget,
++            maxRuntimeMs = 60_000L
++        ) {
++            seenFrames++
++            if (seenFrames >= targetFrames) engine.requestStop(0)
++        }
++        val elapsed = System.nanoTime() - start
++        val ms = elapsed / 1_000_000.0
++        val mips = result.instructions.toDouble() / (elapsed / 1_000_000_000.0) / 1_000_000.0
++        val t = Trial(
++            ms = ms,
++            mips = mips,
++            frames = result.frames,
++            instructions = result.instructions,
++            events = result.events,
++            timers = result.timerCallbacks,
++            timedOut = result.timedOut
++        )
++        results += t
++        println(
++            "TRIAL index=$trial ms=%.3f mips=%.3f frames=%d instructions=%d events=%d timers=%d timeout=%s".format(
++                t.ms, t.mips, t.frames, t.instructions, t.events, t.timers, t.timedOut
++            )
++        )
++    }
++
++    val expected = results.first().signature()
++    check(results.all { it.signature() == expected }) {
++        "non-deterministic guest-work signatures: ${results.map { it.signature() }}"
++    }
++    check(results.first().frames == targetFrames.toLong()) {
++        "expected $targetFrames frames, got ${results.first().frames}"
++    }
++    check(!results.first().timedOut) { "benchmark timed out" }
++
++    fun median(values: List<Double>): Double {
++        val sorted = values.sorted()
++        val mid = sorted.size / 2
++        return if ((sorted.size and 1) != 0) sorted[mid]
++        else (sorted[mid - 1] + sorted[mid]) / 2.0
++    }
++
++    val warm = results.drop(1)
++    val medianMips = median(warm.map { it.mips })
++    val medianMs = median(warm.map { it.ms })
++    val equivalentFps = targetFrames * 1000.0 / medianMs
++    val sig = results.first()
++    val runtimeVersion = VxpCoreLibrary::class.java.getField("VERSION").get(null) as String
++    println(
++        "RESULT version=$runtimeVersion medianWarmMips=%.3f medianWarmMs=%.3f equivalentFps=%.3f signature=%d/%d/%d/%d/%s".format(
++            medianMips,
++            medianMs,
++            equivalentFps,
++            sig.frames,
++            sig.instructions,
++            sig.events,
++            sig.timers,
++            sig.timedOut
++        )
++    )
++}
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/tests/jvm/UnifiedLaunchFacadeRegression.kt /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/tests/jvm/UnifiedLaunchFacadeRegression.kt
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/tests/jvm/UnifiedLaunchFacadeRegression.kt	2026-09-20 10:19:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/tests/jvm/UnifiedLaunchFacadeRegression.kt	2026-09-21 13:27:01.778099967 +0000
+@@ -2,7 +2,7 @@
+ import java.io.File
+ 
+ fun main() {
+-    require(VxpCoreLibrary.VERSION == "0.8.8.3")
++    require(VxpCoreLibrary.VERSION == "0.8.8.4")
+ 
+     val empty = VxpCoreLibrary.preflight(ByteArray(0), "empty.vxp")
+     require(empty.support == VxpSupportLevel.INVALID)
+@@ -37,5 +37,5 @@
+     require(launchFailure is VxpLaunchException)
+     require(launchFailure.preflight.backend == VxpBackendType.FLASH_LITE)
+ 
+-    println("[OK] v0.8.8.3 unified preflight/launch facade regression passed")
++    println("[OK] v0.8.8.4 unified preflight/launch facade regression passed")
+ }
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/tests/jvm/VxpSpeedPreparedRegression.kt /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/tests/jvm/VxpSpeedPreparedRegression.kt
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/tests/jvm/VxpSpeedPreparedRegression.kt	2026-09-20 10:19:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/tests/jvm/VxpSpeedPreparedRegression.kt	2026-09-21 13:27:01.777961728 +0000
+@@ -14,7 +14,7 @@
+     val prepared = VxpCoreLibrary.prepare(vxp)
+     require(prepared.backend == VxpBackendType.ELF_ARM)
+     require(prepared.sourceSize == vxp.size)
+-    require(VxpCoreLibrary.VERSION == "0.8.8.3")
++    require(VxpCoreLibrary.VERSION == "0.8.8.4")
+ 
+     val root = File("/mnt/data/vxp_speed_prepared_fs").apply { deleteRecursively(); mkdirs() }
+     val engine = VxpCoreEngine(root)
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core/build.gradle.kts /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core/build.gradle.kts
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core/build.gradle.kts	2026-09-20 10:19:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core/build.gradle.kts	2026-09-21 13:27:01.772902688 +0000
+@@ -1,3 +1,3 @@
+ plugins { id("org.jetbrains.kotlin.jvm") }
+-version = "0.8.8.3"
++version = "0.8.8.4"
+ kotlin { jvmToolchain(17) }
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core/src/main/kotlin/vxpcore/ArmCpu.kt /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core/src/main/kotlin/vxpcore/ArmCpu.kt
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core/src/main/kotlin/vxpcore/ArmCpu.kt	2026-09-20 10:11:41.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core/src/main/kotlin/vxpcore/ArmCpu.kt	2026-09-21 05:57:39.000000000 +0000
+@@ -296,13 +296,13 @@
+                     faultPc = startPc
+                     faultThumb = false
+                     val write0 = decodeCache.armMayWriteMemory(slot, 0)
+-                    stepArmDecoded(startPc, decodeCache.armOpcode(slot, 0), decodeCache.armKind(slot, 0))
++                    stepArmCachedDecoded(startPc, decodeCache.armOpcode(slot, 0), decodeCache.armKind(slot, 0))
+                     executed = 1
+                     val invalidated0 = write0 && memory.executableGeneration() != generation
+                     if (!invalidated0 && length == 2 && !thumb && r[15] == startPc + 4 && !halted && !runtime.exitRequested) {
+                         faultPc = startPc + 4
+                         val write1 = decodeCache.armMayWriteMemory(slot, 1)
+-                        stepArmDecoded(startPc + 4, decodeCache.armOpcode(slot, 1), decodeCache.armKind(slot, 1))
++                        stepArmCachedDecoded(startPc + 4, decodeCache.armOpcode(slot, 1), decodeCache.armKind(slot, 1))
+                         executed = 2
+                         if (write1 && memory.executableGeneration() != generation) lastArmBlockSlot = -1
+                     }
+@@ -312,7 +312,7 @@
+                         faultPc = expectedPc
+                         faultThumb = false
+                         val mayWriteMemory = decodeCache.armMayWriteMemory(slot, executed)
+-                        stepArmDecoded(expectedPc, decodeCache.armOpcode(slot, executed), decodeCache.armKind(slot, executed))
++                        stepArmCachedDecoded(expectedPc, decodeCache.armOpcode(slot, executed), decodeCache.armKind(slot, executed))
+                         executed++
+                         if (mayWriteMemory && memory.executableGeneration() != generation) break
+                         expectedPc += 4
+@@ -332,6 +332,291 @@
+     }
+ 
+     /**
++     * JIT-friendly cached ARM dispatcher.
++     *
++     * Cached basic blocks have already classified the common non-overlapping ARM
++     * instruction families. Keep those paths compact enough for HotSpot/ART to
++     * inline into executeCachedBlock(), while preserving the full decoder as the
++     * fallback for rare/overlapping encodings and exact trace behavior.
++     */
++    private fun stepArmCachedDecoded(pc: Int, insn: Int, decodeKind: Int) {
++        if (decodeKind == BasicBlockDecodeCache.ARM_BLX_IMM) {
++            armCachedBlxImmediate(pc, insn)
++            return
++        }
++
++        r[15] = pc + 4
++        val cond = insn ushr 28
++        if (cond != 14 && !conditionPassed(cond)) return
++
++        when (decodeKind) {
++            BasicBlockDecodeCache.ARM_BRANCH -> armCachedBranch(pc, insn)
++            BasicBlockDecodeCache.ARM_BLOCK_LOAD -> armCachedBlockLoad(pc, insn)
++            BasicBlockDecodeCache.ARM_BLOCK_STORE -> armCachedBlockStore(pc, insn)
++            BasicBlockDecodeCache.ARM_SINGLE_LOAD_IMM_WORD -> armCachedLoadImmediateWord(pc, insn)
++            BasicBlockDecodeCache.ARM_SINGLE_STORE_IMM_WORD -> armCachedStoreImmediateWord(pc, insn)
++            BasicBlockDecodeCache.ARM_SINGLE_LOAD_REG_WORD -> armCachedLoadRegisterWord(pc, insn)
++            BasicBlockDecodeCache.ARM_SINGLE_STORE_REG_WORD -> armCachedStoreRegisterWord(pc, insn)
++            BasicBlockDecodeCache.ARM_DP_ADD -> armCachedAdd(pc, insn)
++            BasicBlockDecodeCache.ARM_DP_MOV -> armCachedMov(pc, insn)
++            BasicBlockDecodeCache.ARM_SINGLE_DATA -> armCachedSingleData(pc, insn)
++            BasicBlockDecodeCache.ARM_DATA_PROCESSING -> armCachedDataProcessing(pc, insn)
++            else -> stepArmDecoded(pc, insn, decodeKind)
++        }
++    }
++
++    private fun armCachedBlxImmediate(pc: Int, insn: Int) {
++        var imm24 = insn and 0x00ffffff
++        if ((imm24 and 0x00800000) != 0) imm24 = imm24 or 0xff000000.toInt()
++        val h = (insn ushr 24) and 1
++        r[14] = pc + 4
++        thumb = true
++        r[15] = (pc + 8 + (imm24 shl 2) + (h shl 1)) and -2
++    }
++
++    private fun armCachedBranch(pc: Int, insn: Int) {
++        var imm24 = insn and 0x00ffffff
++        if ((imm24 and 0x00800000) != 0) imm24 = imm24 or 0xff000000.toInt()
++        if ((insn and 0x01000000) != 0) r[14] = pc + 4
++        r[15] = pc + 8 + (imm24 shl 2)
++    }
++
++    private fun armCachedBlockAddress(insn: Int, count: Int): Int {
++        val p = (insn and (1 shl 24)) != 0
++        val u = (insn and (1 shl 23)) != 0
++        val rn = (insn ushr 16) and 0xf
++        return when {
++            u && !p -> r[rn]
++            u && p -> r[rn] + 4
++            !u && !p -> r[rn] - 4 * (count - 1)
++            else -> r[rn] - 4 * count
++        }
++    }
++
++    private fun armCachedBlockLoad(pc: Int, insn: Int) {
++        val u = (insn and (1 shl 23)) != 0
++        val w = (insn and (1 shl 21)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val list = insn and 0xffff
++        val count = Integer.bitCount(list)
++        var addr = armCachedBlockAddress(insn, count)
++        var remaining = list
++        while (remaining != 0) {
++            val reg = Integer.numberOfTrailingZeros(remaining)
++            remaining = remaining and (remaining - 1)
++            val value = memory.read32(addr)
++            if (reg == 15) {
++                thumb = (value and 1) != 0
++                r[15] = value and -2
++            } else {
++                r[reg] = value
++            }
++            addr += 4
++        }
++        if (w) r[rn] = if (u) r[rn] + 4 * count else r[rn] - 4 * count
++    }
++
++    private fun armCachedBlockStore(pc: Int, insn: Int) {
++        val u = (insn and (1 shl 23)) != 0
++        val w = (insn and (1 shl 21)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val list = insn and 0xffff
++        val count = Integer.bitCount(list)
++        var addr = armCachedBlockAddress(insn, count)
++        var remaining = list
++        while (remaining != 0) {
++            val reg = Integer.numberOfTrailingZeros(remaining)
++            remaining = remaining and (remaining - 1)
++            memory.write32(addr, if (reg == 15) pc + 12 else r[reg])
++            addr += 4
++        }
++        if (w) r[rn] = if (u) r[rn] + 4 * count else r[rn] - 4 * count
++    }
++
++    private fun armCachedLoadImmediateWord(pc: Int, insn: Int) {
++        val preIndex = (insn and (1 shl 24)) != 0
++        val up = (insn and (1 shl 23)) != 0
++        val writeBack = (insn and (1 shl 21)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val rd = (insn ushr 12) and 0xf
++        val offset = insn and 0xfff
++        val base = if (rn == 15) pc + 8 else r[rn]
++        val adjusted = if (up) base + offset else base - offset
++        val value = memory.read32(if (preIndex) adjusted else base)
++        if (rd == 15) {
++            thumb = (value and 1) != 0
++            r[15] = value and -2
++        } else {
++            r[rd] = value
++        }
++        if (!preIndex || writeBack) r[rn] = adjusted
++    }
++
++    private fun armCachedStoreImmediateWord(pc: Int, insn: Int) {
++        val preIndex = (insn and (1 shl 24)) != 0
++        val up = (insn and (1 shl 23)) != 0
++        val writeBack = (insn and (1 shl 21)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val rd = (insn ushr 12) and 0xf
++        val offset = insn and 0xfff
++        val base = if (rn == 15) pc + 8 else r[rn]
++        val adjusted = if (up) base + offset else base - offset
++        memory.write32(if (preIndex) adjusted else base, if (rd == 15) pc + 12 else r[rd])
++        if (!preIndex || writeBack) r[rn] = adjusted
++    }
++
++    private fun armCachedLoadRegisterWord(pc: Int, insn: Int) {
++        val preIndex = (insn and (1 shl 24)) != 0
++        val up = (insn and (1 shl 23)) != 0
++        val writeBack = (insn and (1 shl 21)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val rd = (insn ushr 12) and 0xf
++        decodeShiftedRegister(insn and 0xfff, pc)
++        val base = if (rn == 15) pc + 8 else r[rn]
++        val adjusted = if (up) base + shiftResult else base - shiftResult
++        val value = memory.read32(if (preIndex) adjusted else base)
++        if (rd == 15) {
++            thumb = (value and 1) != 0
++            r[15] = value and -2
++        } else {
++            r[rd] = value
++        }
++        if (!preIndex || writeBack) r[rn] = adjusted
++    }
++
++    private fun armCachedStoreRegisterWord(pc: Int, insn: Int) {
++        val preIndex = (insn and (1 shl 24)) != 0
++        val up = (insn and (1 shl 23)) != 0
++        val writeBack = (insn and (1 shl 21)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val rd = (insn ushr 12) and 0xf
++        decodeShiftedRegister(insn and 0xfff, pc)
++        val base = if (rn == 15) pc + 8 else r[rn]
++        val adjusted = if (up) base + shiftResult else base - shiftResult
++        memory.write32(if (preIndex) adjusted else base, if (rd == 15) pc + 12 else r[rd])
++        if (!preIndex || writeBack) r[rn] = adjusted
++    }
++
++    private fun armCachedSingleData(pc: Int, insn: Int) {
++        val registerOffset = (insn and (1 shl 25)) != 0
++        val preIndex = (insn and (1 shl 24)) != 0
++        val up = (insn and (1 shl 23)) != 0
++        val byte = (insn and (1 shl 22)) != 0
++        val writeBack = (insn and (1 shl 21)) != 0
++        val load = (insn and (1 shl 20)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val rd = (insn ushr 12) and 0xf
++        val offset = if (!registerOffset) {
++            insn and 0xfff
++        } else {
++            decodeShiftedRegister(insn and 0xfff, pc)
++            shiftResult
++        }
++        val base = if (rn == 15) pc + 8 else r[rn]
++        val adjusted = if (up) base + offset else base - offset
++        val addr = if (preIndex) adjusted else base
++        if (load) {
++            val value = if (byte) memory.read8(addr) else memory.read32(addr)
++            if (rd == 15) {
++                thumb = (value and 1) != 0
++                r[15] = value and -2
++            } else {
++                r[rd] = value
++            }
++        } else {
++            val value = if (rd == 15) pc + 12 else r[rd]
++            if (byte) memory.write8(addr, value) else memory.write32(addr, value)
++        }
++        if (!preIndex || writeBack) r[rn] = adjusted
++    }
++
++    private fun armCachedAdd(pc: Int, insn: Int) {
++        val rn = (insn ushr 16) and 0xf
++        val rd = (insn ushr 12) and 0xf
++        val op1 = if (rn == 15) pc + 8 else r[rn]
++        if ((insn and (1 shl 25)) != 0) decodeImmediate(insn)
++        else decodeShiftedRegister(insn and 0xfff, pc)
++        val op2 = shiftResult
++        val result = op1 + op2
++        writeDp(
++            rd,
++            result,
++            (insn and (1 shl 20)) != 0,
++            carryAdd(op1, op2),
++            overflowAdd(op1, op2, result)
++        )
++    }
++
++    private fun armCachedMov(pc: Int, insn: Int) {
++        val rd = (insn ushr 12) and 0xf
++        if ((insn and (1 shl 25)) != 0) decodeImmediate(insn)
++        else decodeShiftedRegister(insn and 0xfff, pc)
++        writeDp(rd, shiftResult, (insn and (1 shl 20)) != 0, shiftCarry)
++    }
++
++    private fun armCachedDataProcessing(pc: Int, insn: Int) {
++        val immediate = (insn and (1 shl 25)) != 0
++        val opcode = (insn ushr 21) and 0xf
++        val setFlags = (insn and (1 shl 20)) != 0
++        val rn = (insn ushr 16) and 0xf
++        val rd = (insn ushr 12) and 0xf
++        val op1 = if (rn == 15) pc + 8 else r[rn]
++        if (immediate) decodeImmediate(insn) else decodeShiftedRegister(insn and 0xfff, pc)
++        val op2 = shiftResult
++        val shCarry = shiftCarry
++        when (opcode) {
++            0 -> writeDp(rd, op1 and op2, setFlags, shCarry)
++            1 -> writeDp(rd, op1 xor op2, setFlags, shCarry)
++            2 -> {
++                val result = op1 - op2
++                writeDp(rd, result, setFlags, carrySub(op1, op2), overflowSub(op1, op2, result))
++            }
++            3 -> {
++                val result = op2 - op1
++                writeDp(rd, result, setFlags, carrySub(op2, op1), overflowSub(op2, op1, result))
++            }
++            4 -> {
++                val result = op1 + op2
++                writeDp(rd, result, setFlags, carryAdd(op1, op2), overflowAdd(op1, op2, result))
++            }
++            5 -> {
++                val carryIn = if (c) 1 else 0
++                val unsigned = op1.toUInt().toLong() + op2.toUInt().toLong() + carryIn.toLong()
++                val signed = op1.toLong() + op2.toLong() + carryIn.toLong()
++                val result = unsigned.toInt()
++                writeDp(rd, result, setFlags, unsigned > 0xffffffffL,
++                    signed > Int.MAX_VALUE.toLong() || signed < Int.MIN_VALUE.toLong())
++            }
++            6 -> {
++                val borrow = if (c) 0 else 1
++                val subtrahend = op2.toUInt().toLong() + borrow.toLong()
++                val unsignedA = op1.toUInt().toLong()
++                val signed = op1.toLong() - op2.toLong() - borrow.toLong()
++                val result = (unsignedA - subtrahend).toInt()
++                writeDp(rd, result, setFlags, unsignedA >= subtrahend,
++                    signed > Int.MAX_VALUE.toLong() || signed < Int.MIN_VALUE.toLong())
++            }
++            7 -> {
++                val borrow = if (c) 0 else 1
++                val subtrahend = op1.toUInt().toLong() + borrow.toLong()
++                val unsignedA = op2.toUInt().toLong()
++                val signed = op2.toLong() - op1.toLong() - borrow.toLong()
++                val result = (unsignedA - subtrahend).toInt()
++                writeDp(rd, result, setFlags, unsignedA >= subtrahend,
++                    signed > Int.MAX_VALUE.toLong() || signed < Int.MIN_VALUE.toLong())
++            }
++            8 -> { val result = op1 and op2; setNZ(result); c = shCarry }
++            9 -> { val result = op1 xor op2; setNZ(result); c = shCarry }
++            10 -> { val result = op1 - op2; setNZ(result); c = carrySub(op1, op2); v = overflowSub(op1, op2, result) }
++            11 -> { val result = op1 + op2; setNZ(result); c = carryAdd(op1, op2); v = overflowAdd(op1, op2, result) }
++            12 -> writeDp(rd, op1 or op2, setFlags, shCarry)
++            13 -> writeDp(rd, op2, setFlags, shCarry)
++            14 -> writeDp(rd, op1 and op2.inv(), setFlags, shCarry)
++            15 -> writeDp(rd, op2.inv(), setFlags, shCarry)
++        }
++    }
++
++    /**
+      * JIT-friendly cached Thumb dispatcher. The full Thumb decoder is intentionally large
+      * because it preserves all rare instruction families. Cached basic blocks already carry
+      * a coarse decode kind, so route the common families through small helpers instead of
+@@ -704,7 +989,12 @@
+         }
+ 
+         // Single data transfer LDR/STR (immediate or simple shifted register offset)
+-        if (decodeKind == BasicBlockDecodeCache.ARM_SINGLE_DATA) {
++        if (decodeKind == BasicBlockDecodeCache.ARM_SINGLE_DATA ||
++            decodeKind == BasicBlockDecodeCache.ARM_SINGLE_LOAD_IMM_WORD ||
++            decodeKind == BasicBlockDecodeCache.ARM_SINGLE_STORE_IMM_WORD ||
++            decodeKind == BasicBlockDecodeCache.ARM_SINGLE_LOAD_REG_WORD ||
++            decodeKind == BasicBlockDecodeCache.ARM_SINGLE_STORE_REG_WORD
++        ) {
+             val i = (insn and (1 shl 25)) != 0
+             val p = (insn and (1 shl 24)) != 0
+             val u = (insn and (1 shl 23)) != 0
+@@ -895,7 +1185,10 @@
+         }
+ 
+         // Data processing
+-        if (decodeKind == BasicBlockDecodeCache.ARM_DATA_PROCESSING) {
++        if (decodeKind == BasicBlockDecodeCache.ARM_DATA_PROCESSING ||
++            decodeKind == BasicBlockDecodeCache.ARM_DP_ADD ||
++            decodeKind == BasicBlockDecodeCache.ARM_DP_MOV
++        ) {
+             val immediate = (insn and (1 shl 25)) != 0
+             val opcode = (insn ushr 21) and 0xf
+             val setFlags = (insn and (1 shl 20)) != 0
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core/src/main/kotlin/vxpcore/BasicBlockDecodeCache.kt /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core/src/main/kotlin/vxpcore/BasicBlockDecodeCache.kt
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core/src/main/kotlin/vxpcore/BasicBlockDecodeCache.kt	2026-09-20 10:08:38.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core/src/main/kotlin/vxpcore/BasicBlockDecodeCache.kt	2026-09-21 05:54:40.000000000 +0000
+@@ -19,6 +19,14 @@
+         const val ARM_BRANCH = 2
+         const val ARM_SINGLE_DATA = 3
+         const val ARM_DATA_PROCESSING = 4
++        const val ARM_BLOCK_LOAD = 5
++        const val ARM_BLOCK_STORE = 6
++        const val ARM_SINGLE_LOAD_IMM_WORD = 7
++        const val ARM_SINGLE_STORE_IMM_WORD = 8
++        const val ARM_SINGLE_LOAD_REG_WORD = 9
++        const val ARM_SINGLE_STORE_REG_WORD = 10
++        const val ARM_DP_ADD = 11
++        const val ARM_DP_MOV = 12
+ 
+         const val THUMB_OTHER = 0
+         const val THUMB_SHIFT = 1
+@@ -190,7 +198,23 @@
+     private fun classifyArm(insn: Int): Int {
+         if ((insn and 0xFE000000.toInt()) == 0xFA000000.toInt()) return ARM_BLX_IMM
+         if ((insn and 0x0e000000) == 0x0a000000) return ARM_BRANCH
+-        if ((insn and 0x0c000000) == 0x04000000) return ARM_SINGLE_DATA
++        if ((insn and 0x0e000000) == 0x08000000) {
++            return if ((insn and (1 shl 20)) != 0) ARM_BLOCK_LOAD else ARM_BLOCK_STORE
++        }
++        if ((insn and 0x0c000000) == 0x04000000) {
++            val registerOffset = (insn and (1 shl 25)) != 0
++            val byte = (insn and (1 shl 22)) != 0
++            val load = (insn and (1 shl 20)) != 0
++            if (!byte) {
++                return when {
++                    load && !registerOffset -> ARM_SINGLE_LOAD_IMM_WORD
++                    !load && !registerOffset -> ARM_SINGLE_STORE_IMM_WORD
++                    load -> ARM_SINGLE_LOAD_REG_WORD
++                    else -> ARM_SINGLE_STORE_REG_WORD
++                }
++            }
++            return ARM_SINGLE_DATA
++        }
+         if ((insn and 0x0c000000) == 0x00000000 &&
+             (insn and 0x0ffffff0) != 0x012fff10 &&
+             (insn and 0x0ffffff0) != 0x012fff30 &&
+@@ -202,7 +226,13 @@
+             (insn and 0x0ff00090) != 0x01600080 &&
+             (insn and 0x0ff00090) != 0x01200080 &&
+             (insn and 0x0fc000f0) != 0x00000090
+-        ) return ARM_DATA_PROCESSING
++        ) {
++            return when ((insn ushr 21) and 0xf) {
++                4 -> ARM_DP_ADD
++                13 -> ARM_DP_MOV
++                else -> ARM_DATA_PROCESSING
++            }
++        }
+         return ARM_OTHER
+     }
+ 
+@@ -231,7 +261,8 @@
+ 
+     private fun armWritesMemory(insn: Int, kind: Int): Boolean {
+         if (kind == ARM_SINGLE_DATA) return (insn and (1 shl 20)) == 0
+-        if ((insn and 0x0e000000) == 0x08000000) return (insn and (1 shl 20)) == 0 // STM
++        if (kind == ARM_SINGLE_STORE_IMM_WORD || kind == ARM_SINGLE_STORE_REG_WORD) return true
++        if (kind == ARM_BLOCK_STORE) return true
+         if ((insn and 0x0e000090) == 0x00000090 && ((insn ushr 5) and 0x3) != 0) {
+             val loadBit = (insn and (1 shl 20)) != 0
+             val sh = (insn ushr 5) and 0x3
+@@ -252,6 +283,9 @@
+     private fun armTerminatesBlock(insn: Int, kind: Int): Boolean = when (kind) {
+         ARM_BLX_IMM, ARM_BRANCH -> true
+         ARM_SINGLE_DATA -> (insn and (1 shl 20)) != 0 && ((insn ushr 12) and 0xf) == 15
++        ARM_SINGLE_LOAD_IMM_WORD, ARM_SINGLE_LOAD_REG_WORD -> ((insn ushr 12) and 0xf) == 15
++        ARM_BLOCK_LOAD -> (insn and 0x8000) != 0
++        ARM_DP_ADD, ARM_DP_MOV -> ((insn ushr 12) and 0xf) == 15
+         ARM_DATA_PROCESSING -> {
+             val opcode = (insn ushr 21) and 0xf
+             opcode !in 8..11 && ((insn ushr 12) and 0xf) == 15
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core/src/main/kotlin/vxpcore/VxpLibrary.kt /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core/src/main/kotlin/vxpcore/VxpLibrary.kt
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core/src/main/kotlin/vxpcore/VxpLibrary.kt	2026-09-20 10:19:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core/src/main/kotlin/vxpcore/VxpLibrary.kt	2026-09-21 13:27:01.773715143 +0000
+@@ -238,7 +238,7 @@
+ }
+ 
+ object VxpCoreLibrary {
+-    const val VERSION = "0.8.8.3"
++    const val VERSION = "0.8.8.4"
+ 
+     fun detect(bytes: ByteArray): VxpBackendType =
+         VxpCoreEngine(File(".")).detect(bytes).toPublicBackend()
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core-android/build.gradle.kts /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core-android/build.gradle.kts
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core-android/build.gradle.kts	2026-09-20 10:19:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core-android/build.gradle.kts	2026-09-21 13:27:01.772788506 +0000
+@@ -2,7 +2,7 @@
+     id("com.android.library")
+     id("org.jetbrains.kotlin.android")
+ }
+-version = "0.8.8.3"
++version = "0.8.8.4"
+ android {
+     namespace = "vn.com.doxuanhop.vxpcore.android"
+     compileSdk = 35
+diff -ruN '--exclude=dist' '--exclude=build' '--exclude=validation' /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core-android/src/main/kotlin/vxpcore/android/AndroidVxpCore.kt /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core-android/src/main/kotlin/vxpcore/android/AndroidVxpCore.kt
+--- /mnt/data/vxp_work/base083/VXP-Core-Library-v0.8.8.3-THUMB-JIT/vxp-core-android/src/main/kotlin/vxpcore/android/AndroidVxpCore.kt	2026-09-20 10:19:00.000000000 +0000
++++ /mnt/data/vxp_work/VXP-Core-Library-v0.8.8.4-ARM-LUA-HOTBLOCK/vxp-core-android/src/main/kotlin/vxpcore/android/AndroidVxpCore.kt	2026-09-21 13:27:01.774197420 +0000
+@@ -10,7 +10,7 @@
+  * Your existing UI only needs to consume [FrameSnapshot] and forward key/touch events.
+  */
+ object AndroidVxpCore {
+-    const val VERSION = "0.8.8.3"
++    const val VERSION = "0.8.8.4"
+ 
+     /** Preflight a package once; cache the result while browsing/searching for faster OK-to-play. */
+     fun prepare(bytes: ByteArray): VxpPreparedImage = VxpCoreLibrary.prepare(bytes)

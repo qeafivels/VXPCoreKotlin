@@ -1,0 +1,63 @@
+{
+  "profile": "Chetaslua",
+  "sha256": "9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85",
+  "trials": [
+    {
+      "trial": "0",
+      "frames": 26,
+      "events": 25,
+      "timers": 23,
+      "instructions": 138287144
+    },
+    {
+      "trial": "1",
+      "frames": 26,
+      "events": 25,
+      "timers": 23,
+      "instructions": 138287144
+    },
+    {
+      "trial": "2",
+      "frames": 28,
+      "events": 27,
+      "timers": 25,
+      "instructions": 147722743
+    },
+    {
+      "trial": "3",
+      "frames": 27,
+      "events": 26,
+      "timers": 24,
+      "instructions": 143008808
+    },
+    {
+      "trial": "4",
+      "frames": 26,
+      "events": 25,
+      "timers": 23,
+      "instructions": 138287144
+    },
+    {
+      "trial": "5",
+      "frames": 28,
+      "events": 27,
+      "timers": 25,
+      "instructions": 147722743
+    },
+    {
+      "trial": "6",
+      "frames": 27,
+      "events": 26,
+      "timers": 24,
+      "instructions": 143008808
+    }
+  ],
+  "summary": {
+    "median_fps": 15.0,
+    "p95_fps": 15.555555555555555,
+    "median_instructions": 143008808,
+    "baseline_fps": 6.111111111111111,
+    "pass_floor_fps": 5.927777777777777,
+    "pass": true
+  }
+}

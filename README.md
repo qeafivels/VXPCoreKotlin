@@ -73,6 +73,22 @@ Release validation on the user-supplied `Chetaslua.vxp` target (SHA-256 `9e7ce08
 
 v0.8.9 adds deterministic fixed-frame A/B performance gating so future optimizations must preserve the exact guest-work signature before speedup is accepted. Release materials are under `releases/v0.8.9/`; the user-supplied VXP binary is test-only and is not committed.
 
+### v0.8.8.4 — ARM/LUA-HOTBLOCK (historical validated milestone)
+
+This historical milestone extends the v0.8.8.3 cached execution path to ARM-heavy Lua workloads. It is retained for reproducibility; newer validated milestones remain v0.8.9 and v0.8.9.1.
+
+Validation on Chetaslua SHA-256 `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85`:
+- fixed-work signature: **40 frames / 205,398,835 instructions / 39 events / 37 timers**, identical;
+- warm median throughput: **49.097 → 63.389 MIPS (+29.11%)**;
+- fixed-work equivalent FPS: **9.561 → 12.345 (+29.12%)**;
+- 40-frame wall time: **4183.567 → 3240.267 ms (-22.55%)**;
+- continuous 1.8 s gate: **15.00 median FPS**, **15.56 p95 FPS**, PASS;
+- JVM regressions: **37/37 PASS**;
+- fixed malformed/unsupported gate: **33/33 PASS**;
+- clean-room and Kotlin-only checks: **PASS**.
+
+The full 8,192-case fuzz-derived endurance suite was not rerun in this v0.8.8.4 re-versioning pass. Release materials are under `releases/v0.8.8.4/`; the benchmark binary is not committed.
+
 ## Supported backends
 
 | VXP type | Backend | Status |

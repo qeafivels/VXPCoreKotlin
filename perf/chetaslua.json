@@ -6,12 +6,12 @@
   "workload": {
     "warmup_trials": 2,
     "measurement_seconds": 1.8,
-    "notes": "Lua-heavy title. v0.8.8.3 validation reported 11 frames / 86,438,337 guest instructions in the 1.8 s smoke path."
+    "notes": "Lua-heavy title. v0.8.8.4 continuous validation reached 27 median frames in the 1.8 s policy window. Newer release milestones may exceed this historical gate baseline."
   },
   "baseline": {
-    "version": "0.8.8.3",
-    "frames": 11,
-    "guest_instructions": 86438337
+    "version": "0.8.8.4",
+    "frames": 27,
+    "guest_instructions": 143008808
   },
   "optimization_focus": [
     "ARM cached execution path",
