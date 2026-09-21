@@ -37,6 +37,9 @@ Semantic signature:
 - fixed malformed/unsupported: **33/33 PASS**
 - clean-room: **PASS**
 - Kotlin-only: **PASS**
-- full 8,192-case fuzz-derived endurance was not rerun in this re-versioning pass.
+- full deterministic fuzz-derived endurance: **8,192/8,192 PASS**, **0 failure clusters**, **0 catastrophic exits**, max chunk heap drift **92,448 B / 12,582,912 B ceiling**.
 
 See `ARM_LUA_HOTBLOCK_v0.8.8.4_REPORT.md`.
+
+
+Full fuzz details: `FUZZ_DERIVED_FULL_v0.8.8.4_REPORT.md`.

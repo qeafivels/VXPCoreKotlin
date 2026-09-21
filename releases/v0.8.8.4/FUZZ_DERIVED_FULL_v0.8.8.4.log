@@ -1,0 +1,114 @@
+# v0.8.8.4 full fuzz-derived gate raw log
+# candidate_jar_sha256=c3eb873d53decc3e37049e9c06d93e3b737d2f2eee33306c01e5a7271f0cb771
+# master_seed=6221811148222257714
+# rounds=32 cases_per_round=256 total_cases=8192 chunk_rounds=4 heap=-Xms16m/-Xmx96m timeout=30s
+
+===== FIXED MALFORMED 33/33 =====
+[PASS] empty	2.648 ms
+[PASS] random_unknown	3.060 ms
+[PASS] elf_truncated	0.107 ms
+[PASS] elf64_unsupported	0.473 ms
+[PASS] elf_big_endian	0.419 ms
+[PASS] elf_wrong_machine	0.426 ms
+[PASS] elf_small_ehsize	0.390 ms
+[PASS] elf_phoff_overflow	0.444 ms
+[PASS] elf_phentsize_zero	0.650 ms
+[PASS] elf_phnum_excess	0.642 ms
+[PASS] elf_shoff_outside	0.562 ms
+[PASS] elf_shentsize_zero	0.591 ms
+[PASS] elf_filesz_gt_memsz	0.587 ms
+[PASS] elf_load_outside_file	0.644 ms
+[PASS] elf_load_region_excess	0.650 ms
+[PASS] elf_guest_address_wrap	0.548 ms
+[PASS] embedded_truncated_elf	0.062 ms
+[PASS] truncated_zlib	16.387 ms
+[PASS] zlib_elf_bomb	437.213 ms
+[PASS] raw_zlib_bomb	1243.567 ms
+[PASS] cws_declared_excess	0.292 ms
+[PASS] cws_body_exceeds_declared	0.206 ms
+[PASS] zws_unsupported	0.087 ms
+[PASS] png_pixel_limit	2.713 ms
+[PASS] gif_pixel_limit	0.685 ms
+[PASS] guest_mapping_region_limit	1.129 ms
+[PASS] filesystem_dotdot	70.567 ms
+[PASS] filesystem_absolute_host_path	1.431 ms
+[PASS] filesystem_path_length	1.529 ms
+[PASS] filesystem_file_size_limit	3.401 ms
+[PASS] filesystem_open_handle_limit	54.052 ms
+[PASS] guest_timer_limit	104.602 ms
+[PASS] filesystem_symlink_escape	2.894 ms
+[OK] malformed/unsupported security gate: 33/33 mutations; no OOM/StackOverflow; 2020.262 ms
+[LIMIT] source=67108864 inflatedExec=33554432 rawStream=33554432 rawTotal=67108864
+[LIMIT] swf=33554432 imagePixels=4194304 guestRegion=33554432 guestTotal=134217728 io=33554432
+[LIMIT] sandboxFile=67108864 openFiles=256 findHandles=128 timers=1024 pathChars=1024
+
+===== FUZZ CHUNK start_round=0 =====
+FUZZ_ROUND	round=0	cases=256	unique_findings=0	elapsed_ms=299.497	heap_after=2049472
+FUZZ_ROUND	round=1	cases=256	unique_findings=0	elapsed_ms=204.003	heap_after=2198552
+FUZZ_ROUND	round=2	cases=256	unique_findings=0	elapsed_ms=107.155	heap_after=2202488
+FUZZ_ROUND	round=3	cases=256	unique_findings=0	elapsed_ms=148.104	heap_after=2203544
+FUZZ_CHUNK	start_round=0	rounds=4	cases=1024	findings=0	heap_baseline=2111096	heap_peak=2203544	heap_drift=92448	heap_limit=12582912	max_round_ms=299.497	master_seed=6221811148222257714
+
+===== FUZZ CHUNK start_round=4 =====
+FUZZ_ROUND	round=4	cases=256	unique_findings=0	elapsed_ms=233.082	heap_after=2052336
+FUZZ_ROUND	round=5	cases=256	unique_findings=0	elapsed_ms=151.517	heap_after=2198824
+FUZZ_ROUND	round=6	cases=256	unique_findings=0	elapsed_ms=134.902	heap_after=2199272
+FUZZ_ROUND	round=7	cases=256	unique_findings=0	elapsed_ms=134.462	heap_after=2202520
+FUZZ_CHUNK	start_round=4	rounds=4	cases=1024	findings=0	heap_baseline=2111096	heap_peak=2202520	heap_drift=91424	heap_limit=12582912	max_round_ms=233.082	master_seed=6221811148222257714
+
+===== FUZZ CHUNK start_round=8 =====
+FUZZ_ROUND	round=8	cases=256	unique_findings=0	elapsed_ms=257.899	heap_after=2051096
+FUZZ_ROUND	round=9	cases=256	unique_findings=0	elapsed_ms=234.378	heap_after=2200696
+FUZZ_ROUND	round=10	cases=256	unique_findings=0	elapsed_ms=170.491	heap_after=2201344
+FUZZ_ROUND	round=11	cases=256	unique_findings=0	elapsed_ms=167.168	heap_after=2203248
+FUZZ_CHUNK	start_round=8	rounds=4	cases=1024	findings=0	heap_baseline=2111096	heap_peak=2203248	heap_drift=92152	heap_limit=12582912	max_round_ms=257.899	master_seed=6221811148222257714
+
+===== FUZZ CHUNK start_round=12 =====
+FUZZ_ROUND	round=12	cases=256	unique_findings=0	elapsed_ms=283.327	heap_after=2052032
+FUZZ_ROUND	round=13	cases=256	unique_findings=0	elapsed_ms=218.728	heap_after=2198008
+FUZZ_ROUND	round=14	cases=256	unique_findings=0	elapsed_ms=126.703	heap_after=2202320
+FUZZ_ROUND	round=15	cases=256	unique_findings=0	elapsed_ms=143.135	heap_after=2202608
+FUZZ_CHUNK	start_round=12	rounds=4	cases=1024	findings=0	heap_baseline=2111104	heap_peak=2202608	heap_drift=91504	heap_limit=12582912	max_round_ms=283.327	master_seed=6221811148222257714
+
+===== FUZZ CHUNK start_round=16 =====
+FUZZ_ROUND	round=16	cases=256	unique_findings=0	elapsed_ms=275.756	heap_after=2051480
+FUZZ_ROUND	round=17	cases=256	unique_findings=0	elapsed_ms=170.314	heap_after=2198216
+FUZZ_ROUND	round=18	cases=256	unique_findings=0	elapsed_ms=139.848	heap_after=2201952
+FUZZ_ROUND	round=19	cases=256	unique_findings=0	elapsed_ms=137.803	heap_after=2202184
+FUZZ_CHUNK	start_round=16	rounds=4	cases=1024	findings=0	heap_baseline=2111104	heap_peak=2202184	heap_drift=91080	heap_limit=12582912	max_round_ms=275.756	master_seed=6221811148222257714
+
+===== FUZZ CHUNK start_round=20 =====
+FUZZ_ROUND	round=20	cases=256	unique_findings=0	elapsed_ms=356.758	heap_after=2052128
+FUZZ_ROUND	round=21	cases=256	unique_findings=0	elapsed_ms=190.407	heap_after=2197768
+FUZZ_ROUND	round=22	cases=256	unique_findings=0	elapsed_ms=171.797	heap_after=2200960
+FUZZ_ROUND	round=23	cases=256	unique_findings=0	elapsed_ms=140.347	heap_after=2202088
+FUZZ_CHUNK	start_round=20	rounds=4	cases=1024	findings=0	heap_baseline=2111104	heap_peak=2202088	heap_drift=90984	heap_limit=12582912	max_round_ms=356.758	master_seed=6221811148222257714
+
+===== FUZZ CHUNK start_round=24 =====
+FUZZ_ROUND	round=24	cases=256	unique_findings=0	elapsed_ms=319.357	heap_after=2049368
+FUZZ_ROUND	round=25	cases=256	unique_findings=0	elapsed_ms=184.407	heap_after=2198184
+FUZZ_ROUND	round=26	cases=256	unique_findings=0	elapsed_ms=143.143	heap_after=2201624
+FUZZ_ROUND	round=27	cases=256	unique_findings=0	elapsed_ms=187.940	heap_after=2202832
+FUZZ_CHUNK	start_round=24	rounds=4	cases=1024	findings=0	heap_baseline=2111104	heap_peak=2202832	heap_drift=91728	heap_limit=12582912	max_round_ms=319.357	master_seed=6221811148222257714
+
+===== FUZZ CHUNK start_round=28 =====
+FUZZ_ROUND	round=28	cases=256	unique_findings=0	elapsed_ms=276.338	heap_after=2052192
+FUZZ_ROUND	round=29	cases=256	unique_findings=0	elapsed_ms=172.607	heap_after=2197744
+FUZZ_ROUND	round=30	cases=256	unique_findings=0	elapsed_ms=190.127	heap_after=2201976
+FUZZ_ROUND	round=31	cases=256	unique_findings=0	elapsed_ms=167.734	heap_after=2202112
+FUZZ_CHUNK	start_round=28	rounds=4	cases=1024	findings=0	heap_baseline=2111104	heap_peak=2202112	heap_drift=91008	heap_limit=12582912	max_round_ms=276.338	master_seed=6221811148222257714
+
+===== FINAL =====
+rounds=32
+cases_per_round=256
+total_cases=8192
+chunk_rounds=4
+chunk_timeout_sec=30
+master_seed=6221811148222257714
+heap=-Xms16m/-Xmx96m
+catastrophic_process_exits=0
+dedup_failure_clusters=0
+max_chunk_heap_drift=92448
+heap_drift_limit=12582912
+max_round_ms=356.758
+[OK] fuzz-derived gate: fixed malformed layer + 8192 deterministic mutation cases; 0 unique failures

@@ -80,7 +80,7 @@ Trên Chetaslua SHA-256 `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b
 - JVM regression: **37/37 PASS**.
 - Malformed/unsupported: **33/33 PASS**.
 - Clean-room/Kotlin-only: **PASS**.
-- Full fuzz-derived 8.192 case **không chạy lại** trong lượt re-version này.
+- Full fuzz-derived: **8.192/8.192 PASS**, 0 failure cluster, 0 catastrophic exit; max chunk heap drift **92.448 B** / trần **12.582.912 B**.
 
 ## 2. Module chung
 

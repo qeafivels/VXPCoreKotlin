@@ -87,7 +87,7 @@ Validation on Chetaslua SHA-256 `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f
 - fixed malformed/unsupported gate: **33/33 PASS**;
 - clean-room and Kotlin-only checks: **PASS**.
 
-The full 8,192-case fuzz-derived endurance suite was not rerun in this v0.8.8.4 re-versioning pass. Release materials are under `releases/v0.8.8.4/`; the benchmark binary is not committed.
+The full deterministic fuzz-derived endurance suite was subsequently rerun: **8,192/8,192 PASS**, **0 failure clusters**, **0 catastrophic exits**, with maximum four-round chunk heap drift **92,448 B** against a **12,582,912 B** ceiling. See `releases/v0.8.8.4/FUZZ_DERIVED_FULL_v0.8.8.4_REPORT.md`. Release materials are under `releases/v0.8.8.4/`; the benchmark binary is not committed.
 
 ## Supported backends
 
