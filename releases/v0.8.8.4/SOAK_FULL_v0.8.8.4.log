@@ -1,0 +1,46 @@
+===== phase1.log =====
+SOAK_CYCLE index=0 ms=3460.295 fps=5.780 mips=31.676 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2739768 heap_after=2744592 drift_from_baseline=-397544
+SOAK_CYCLE index=1 ms=3602.696 fps=5.551 mips=30.424 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2968768 heap_after=2972896 drift_from_baseline=-169240
+SOAK_CYCLE index=2 ms=3425.790 fps=5.838 mips=31.995 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2968920 heap_after=2973248 drift_from_baseline=-168888
+SOAK_CYCLE index=3 ms=3280.013 fps=6.098 mips=33.417 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2969272 heap_after=2973344 drift_from_baseline=-168792
+SOAK_CYCLE index=4 ms=3337.379 fps=5.993 mips=32.843 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2969368 heap_after=2973488 drift_from_baseline=-168648
+SOAK_CYCLE index=5 ms=3312.362 fps=6.038 mips=33.091 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2969512 heap_after=2973640 drift_from_baseline=-168496
+SOAK_RESULT version=0.8.8.4 cycles=6 frames_per_cycle=20 total_frames=120 median_fps=5.915 min_fps=5.551 max_fps=6.098 median_mips=32.419 timeouts=0 crashes=0 signature=20/109607908/19/17/false heap_baseline=3142136 heap_peak=2973640 max_heap_drift=-168496 end_heap_drift=-168496 heap_limit=33554432 pass=true
+===== phase2.log =====
+SOAK_CYCLE index=0 ms=3405.877 fps=5.872 mips=32.182 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2741048 heap_after=2745952 drift_from_baseline=-396184
+SOAK_CYCLE index=1 ms=3270.299 fps=6.116 mips=33.516 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2970144 heap_after=2974272 drift_from_baseline=-167864
+SOAK_CYCLE index=2 ms=3281.582 fps=6.095 mips=33.401 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2970296 heap_after=2974624 drift_from_baseline=-167512
+SOAK_CYCLE index=3 ms=3306.469 fps=6.049 mips=33.150 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2970648 heap_after=2974720 drift_from_baseline=-167416
+SOAK_CYCLE index=4 ms=3706.699 fps=5.396 mips=29.570 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2970744 heap_after=2974864 drift_from_baseline=-167272
+SOAK_CYCLE index=5 ms=3514.344 fps=5.691 mips=31.189 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2970888 heap_after=2975016 drift_from_baseline=-167120
+SOAK_RESULT version=0.8.8.4 cycles=6 frames_per_cycle=20 total_frames=120 median_fps=5.960 min_fps=5.396 max_fps=6.116 median_mips=32.666 timeouts=0 crashes=0 signature=20/109607908/19/17/false heap_baseline=3142136 heap_peak=2975016 max_heap_drift=-167120 end_heap_drift=-167120 heap_limit=33554432 pass=true
+===== phase3.log =====
+SOAK_CYCLE index=0 ms=3628.157 fps=5.512 mips=30.210 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2739768 heap_after=2744592 drift_from_baseline=-397544
+SOAK_CYCLE index=1 ms=3617.169 fps=5.529 mips=30.302 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2968768 heap_after=2972896 drift_from_baseline=-169240
+SOAK_CYCLE index=2 ms=3652.451 fps=5.476 mips=30.009 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2968920 heap_after=2973248 drift_from_baseline=-168888
+SOAK_CYCLE index=3 ms=3559.248 fps=5.619 mips=30.795 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2969272 heap_after=2973344 drift_from_baseline=-168792
+SOAK_CYCLE index=4 ms=3566.098 fps=5.608 mips=30.736 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2969368 heap_after=2973488 drift_from_baseline=-168648
+SOAK_CYCLE index=5 ms=3690.540 fps=5.419 mips=29.700 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2969512 heap_after=2973640 drift_from_baseline=-168496
+SOAK_RESULT version=0.8.8.4 cycles=6 frames_per_cycle=20 total_frames=120 median_fps=5.521 min_fps=5.419 max_fps=5.619 median_mips=30.256 timeouts=0 crashes=0 signature=20/109607908/19/17/false heap_baseline=3142136 heap_peak=2973640 max_heap_drift=-168496 end_heap_drift=-168496 heap_limit=33554432 pass=true
+===== phase4.log =====
+SOAK_CYCLE index=0 ms=3814.961 fps=5.243 mips=28.731 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2766384 heap_after=2771288 drift_from_baseline=-417864
+SOAK_CYCLE index=1 ms=3661.889 fps=5.462 mips=29.932 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2995464 heap_after=3000336 drift_from_baseline=-188816
+SOAK_CYCLE index=2 ms=3744.172 fps=5.342 mips=29.274 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2996360 heap_after=3000432 drift_from_baseline=-188720
+SOAK_CYCLE index=3 ms=3651.564 fps=5.477 mips=30.017 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2996456 heap_after=3000704 drift_from_baseline=-188448
+SOAK_CYCLE index=4 ms=3533.643 fps=5.660 mips=31.018 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2996728 heap_after=3000848 drift_from_baseline=-188304
+SOAK_CYCLE index=5 ms=3548.513 fps=5.636 mips=30.888 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2996872 heap_after=3000944 drift_from_baseline=-188208
+SOAK_RESULT version=0.8.8.4 cycles=6 frames_per_cycle=20 total_frames=120 median_fps=5.469 min_fps=5.243 max_fps=5.660 median_mips=29.974 timeouts=0 crashes=0 signature=20/109607908/19/17/false heap_baseline=3189152 heap_peak=3000944 max_heap_drift=-188208 end_heap_drift=-188208 heap_limit=33554432 pass=true
+===== phase5.log =====
+SOAK_CYCLE index=0 ms=3574.839 fps=5.595 mips=30.661 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2739768 heap_after=2744592 drift_from_baseline=-418520
+SOAK_CYCLE index=1 ms=3445.094 fps=5.805 mips=31.816 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2968768 heap_after=2972896 drift_from_baseline=-190216
+SOAK_CYCLE index=2 ms=3576.045 fps=5.593 mips=30.651 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2968920 heap_after=2973736 drift_from_baseline=-189376
+SOAK_CYCLE index=3 ms=3524.999 fps=5.674 mips=31.094 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2969760 heap_after=2974008 drift_from_baseline=-189104
+SOAK_CYCLE index=4 ms=3560.232 fps=5.618 mips=30.787 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2970032 heap_after=2974152 drift_from_baseline=-188960
+SOAK_CYCLE index=5 ms=3543.534 fps=5.644 mips=30.932 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2970176 heap_after=2974248 drift_from_baseline=-188864
+SOAK_RESULT version=0.8.8.4 cycles=6 frames_per_cycle=20 total_frames=120 median_fps=5.631 min_fps=5.593 max_fps=5.805 median_mips=30.859 timeouts=0 crashes=0 signature=20/109607908/19/17/false heap_baseline=3163112 heap_peak=2974248 max_heap_drift=-188864 end_heap_drift=-188864 heap_limit=33554432 pass=true
+===== phase6b.log =====
+SOAK_CYCLE index=0 ms=4485.030 fps=4.459 mips=24.439 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2739760 heap_after=2744584 drift_from_baseline=-418528
+SOAK_CYCLE index=1 ms=4205.089 fps=4.756 mips=26.066 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2968760 heap_after=2972888 drift_from_baseline=-190224
+SOAK_CYCLE index=2 ms=4607.643 fps=4.341 mips=23.788 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2968912 heap_after=2973728 drift_from_baseline=-189384
+SOAK_CYCLE index=3 ms=5340.314 fps=3.745 mips=20.525 frames=20 instructions=109607908 events=19 timers=17 timeout=false heap_before=2969752 heap_after=2973824 drift_from_baseline=-189288
+SOAK_RESULT version=0.8.8.4 cycles=4 frames_per_cycle=20 total_frames=80 median_fps=4.400 min_fps=3.745 max_fps=4.756 median_mips=24.113 timeouts=0 crashes=0 signature=20/109607908/19/17/false heap_baseline=3163112 heap_peak=2973824 max_heap_drift=-189288 end_heap_drift=-189288 heap_limit=33554432 pass=true
