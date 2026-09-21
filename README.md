@@ -35,9 +35,27 @@ Maintained by **DOXUANHOP**.
 
 See `VERSIONS.md` for the full version matrix, and
 `VXP-Core-Library-v0.8.4.4/CHANGELOG.md` for details.
-Use `v0.8.4.4` for all new integrations and any distribution build.
+The checked-in historical source folders stop at `v0.8.4.4`; newer validated runtime deltas are published under `releases/`. The latest validated runtime milestone is `v0.8.9.1`.
 
 ## Latest validated release artifacts
+
+### v0.8.9.1 — ARM-DECODE-TUNE
+
+The latest validated runtime line is **v0.8.9.1**. This follow-up tunes ARM-heavy workloads with a larger bounded decode cache, a dedicated cached ARM `SUB` path, and a repeated alternating-order performance gate.
+
+Release validation on the user-supplied `Chetaslua.vxp` target (SHA-256 `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85`):
+- Fixed-work signature: **205,398,835 guest instructions / 40 frames / 39 events / 37 timers / no timeout**, unchanged.
+- Prior v0.8.9 release JAR: **68.294 → 69.372 MIPS (+1.58%)**.
+- Fixed-work FPS-equivalent: **13.299 → 13.510 (+1.59%)**.
+- Same-toolchain source A/B: **+1.18%**.
+- JVM/core regression: **38/38 PASS**.
+- Malformed/unsupported gate: **33/33 PASS**.
+- Deterministic fuzz-derived gate: **8,192/8,192 PASS**, 0 catastrophic exits, 0 deduplicated failure clusters.
+- Kotlin-only and clean-room source checks: **PASS**.
+
+Accepted changes are the **512 → 1024 decode-cache slot** increase, dedicated cached/reference ARM `SUB` handling, and the repeated performance gate. Measured alternatives that did not win the repeated median—2048 slots, packed metadata, cached condition metadata, and BX/BLX-register specialization—were rejected.
+
+Release materials are under `releases/v0.8.9.1/`; the user-supplied VXP binary is test-only and is not committed.
 
 ### v0.8.9 — ARM-JIT-FASTPATH
 

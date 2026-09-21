@@ -28,7 +28,26 @@ VXP file
 > Ghi chú: `CHANGELOG v0.8.2` có nhắc patch `v0.8.1` (PNG, Thumb BLX immediate, App Manager, operator-code)
 > nhưng trong repo hiện chỉ lưu các gói `v0.8`, `v0.8.2`, `v0.8.3`, `v0.8.3-cleanroom`, `v0.8.4.1`.
 
-## 1.1 Release validation mới nhất — v0.8.9
+## 1.1 Release validation mới nhất — v0.8.9.1
+
+**v0.8.9.1 — ARM-DECODE-TUNE** là mốc validation mới nhất của nhánh Kotlin-only. Release artifacts được lưu tại `releases/v0.8.9.1/`.
+
+Trên đúng file kiểm thử do người dùng cung cấp `Chetaslua.vxp` (SHA-256 `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85`):
+
+- Fixed-work giữ nguyên tuyệt đối: **205.398.835 instructions / 40 frames / 39 events / 37 timers / không timeout**.
+- So với JAR v0.8.9 đã phát hành: **68,294 → 69,372 MIPS (+1,58%)**.
+- Fixed-work FPS-equivalent: **13,299 → 13,510 (+1,59%)**.
+- So sánh source cùng toolchain: **+1,18%**.
+- Regression JVM/core: **38/38 PASS**.
+- Malformed/unsupported: **33/33 PASS**.
+- Fuzz-derived deterministic: **8.192/8.192 PASS**, 0 catastrophic exit, 0 failure cluster.
+- Kiểm tra Kotlin-only và clean-room: **PASS**.
+
+Thay đổi được giữ lại: decode cache **512 → 1024 slot**, ARM `SUB` cached/reference fast path và performance gate chạy lặp, đảo thứ tự baseline/candidate giữa các vòng. Các thử nghiệm 2048 slot, packed metadata, cached condition metadata và BX/BLX-register specialization không thắng median lặp nên bị loại.
+
+Các số FPS ở đây là **fixed-work host FPS-equivalent**, không phải cam kết FPS render thực tế trên mọi thiết bị Android.
+
+## 1.2 Mốc trước — v0.8.9
 
 **v0.8.9 — ARM-JIT-FASTPATH** là mốc validation mới nhất của nhánh Kotlin-only. Release artifacts được lưu tại `releases/v0.8.9/`.
 
