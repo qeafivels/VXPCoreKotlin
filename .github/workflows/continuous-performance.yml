@@ -1,0 +1,63 @@
+name: Continuous Performance
+
+on:
+  workflow_dispatch:
+    inputs:
+      trials:
+        description: "Warm benchmark trials"
+        required: false
+        default: "7"
+      regression_pct:
+        description: "Allowed median FPS regression percent"
+        required: false
+        default: "3.0"
+  push:
+    branches: [ main ]
+    paths:
+      - "releases/**"
+      - "VXP-Core-Library-*/**"
+      - "scripts/perf_gate.py"
+      - "perf/**"
+      - ".github/workflows/continuous-performance.yml"
+
+jobs:
+  perf-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PERF_CORPUS_URL: ${{ secrets.PERF_CORPUS_URL }}
+      PERF_RUNNER_CMD: ${{ secrets.PERF_RUNNER_CMD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require private benchmark corpus configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${PERF_CORPUS_URL:-}" || -z "${PERF_RUNNER_CMD:-}" ]]; then
+            echo "::notice::PERF_CORPUS_URL/PERF_RUNNER_CMD not configured; skipping private-title benchmark."
+            echo "PERF_SKIP=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Download benchmark title
+        if: env.PERF_SKIP != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p perf/corpus perf/results
+          curl --fail --location --retry 3 "$PERF_CORPUS_URL" -o perf/corpus/Chetaslua.vxp
+          echo "9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85  perf/corpus/Chetaslua.vxp" | sha256sum -c -
+
+      - name: Run continuous benchmark gate
+        if: env.PERF_SKIP != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/perf_gate.py             --profile perf/chetaslua.json             --runner-cmd "$PERF_RUNNER_CMD"             --trials "${{ inputs.trials || '7' }}"             --allowed-regression-pct "${{ inputs.regression_pct || '3.0' }}"             --output perf/results/chetaslua-result.json
+
+      - name: Upload benchmark report
+        if: env.PERF_SKIP != '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: chetaslua-performance
+          path: perf/results/chetaslua-result.json
