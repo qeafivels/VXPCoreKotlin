@@ -1,0 +1,34 @@
+VXP-Core v0.8.9.1 — Chetaslua fixed-frame performance validation
+Target SHA-256: 9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f0fbf234b9cb041b85
+Signature: 40/205398835/39/37/false
+
+Prior v0.8.9 release JAR (5 trials; trial 0 warm-up):
+TRIAL index=0 ms=3199.312 mips=64.201 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=1 ms=3082.288 mips=66.638 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=2 ms=3028.382 mips=67.825 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=3 ms=2987.050 mips=68.763 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=4 ms=2986.120 mips=68.785 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+RESULT version=0.8.9 medianWarmMips=68.294 medianWarmMs=3007.716 equivalentFps=13.299 signature=40/205398835/39/37/false
+
+Same-toolchain v0.8.9 source baseline (5 trials; trial 0 warm-up):
+TRIAL index=0 ms=3173.614 mips=64.721 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=1 ms=3010.511 mips=68.227 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=2 ms=2981.174 mips=68.899 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=3 ms=3016.674 mips=68.088 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=4 ms=2981.105 mips=68.900 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+RESULT version=0.8.9 medianWarmMips=68.563 medianWarmMs=2995.843 equivalentFps=13.352 signature=40/205398835/39/37/false
+
+Final v0.8.9.1 artifact (5 trials; trial 0 warm-up):
+TRIAL index=0 ms=3161.617 mips=64.966 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=1 ms=2990.558 mips=68.682 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=2 ms=2958.756 mips=69.421 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=3 ms=2962.940 mips=69.323 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+TRIAL index=4 ms=2943.911 mips=69.771 frames=40 instructions=205398835 events=39 timers=37 timeout=false
+RESULT version=0.8.9.1 medianWarmMips=69.372 medianWarmMs=2960.848 equivalentFps=13.510 signature=40/205398835/39/37/false
+
+Summary:
+release-JAR baseline: 68.294 MIPS / 13.299 FPS-equivalent
+v0.8.9.1:            69.372 MIPS / 13.510 FPS-equivalent
+artifact speedup:    +1.58% MIPS (+1.59% FPS-equivalent)
+same-toolchain:      68.563 -> 69.372 MIPS (+1.18%)
+semantic signature:  exact
