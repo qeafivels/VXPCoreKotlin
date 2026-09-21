@@ -37,6 +37,22 @@ See `VERSIONS.md` for the full version matrix, and
 `VXP-Core-Library-v0.8.4.4/CHANGELOG.md` for details.
 Use `v0.8.4.4` for all new integrations and any distribution build.
 
+## Latest validated release artifacts
+
+### v0.8.8.3 — THUMB-JIT-FASTPATH
+
+The latest validated runtime line is **v0.8.8.3**. This release keeps the clean-room Kotlin/JVM architecture and adds a JIT-friendly cached Thumb execution fast path.
+
+Release validation:
+- DIBO fixed-work: **105,863,223 guest instructions / 40 frames** exactly.
+- Warm median throughput: **38.448 → 45.739 MIPS (+18.96%)** on the validation host.
+- JVM regressions: **39/39 PASS**.
+- Fixed malformed/unsupported gate: **33/33 PASS**.
+- Deterministic fuzz-derived gate: **8,192/8,192 PASS**, 0 failure clusters.
+- Clean-room and Kotlin-only checks: **PASS**.
+
+Committed release materials are under `releases/v0.8.8.3/`. The historical source snapshots already present in this repository are kept unchanged; do not interpret the v0.8.8.3 validation result as a claim of 100% compatibility with every MediaTek MRE/VXP binary.
+
 ## Supported backends
 
 | VXP type | Backend | Status |
