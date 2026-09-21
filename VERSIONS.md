@@ -28,6 +28,19 @@ VXP file
 > Ghi chú: `CHANGELOG v0.8.2` có nhắc patch `v0.8.1` (PNG, Thumb BLX immediate, App Manager, operator-code)
 > nhưng trong repo hiện chỉ lưu các gói `v0.8`, `v0.8.2`, `v0.8.3`, `v0.8.3-cleanroom`, `v0.8.4.1`.
 
+## 1.1 Release validation mới nhất — v0.8.8.3
+
+**v0.8.8.3 — THUMB-JIT-FASTPATH** là mốc validation mới nhất của nhánh Kotlin-only. Release artifacts được lưu tại `releases/v0.8.8.3/`.
+
+- DIBO fixed-work: **105.863.223 instructions / 40 frames**, không đổi guest work.
+- Warm median: **38,448 → 45,739 MIPS (+18,96%)** trên cùng validation host.
+- JVM regression: **39/39 PASS**.
+- Malformed/unsupported fixed gate: **33/33 PASS**.
+- Fuzz-derived deterministic: **8.192/8.192 PASS**, 0 failure clusters.
+- Clean-room/Kotlin-only: **PASS**.
+
+Mốc này **không** được mô tả là tương thích 100% với mọi file VXP/MRE; compatibility chỉ được khẳng định trong phạm vi corpus và release gates đã kiểm thử.
+
 ## 2. Module chung
 
 | Module | Vai trò |
