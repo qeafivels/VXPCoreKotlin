@@ -44,8 +44,23 @@ The next regression baseline is therefore advanced to **27 frames / 1.8 s (15.0 
 - fixed malformed/unsupported gate: **33/33 PASS**
 - clean-room source check: **PASS**
 - Kotlin-only source check: **PASS**
-- fuzz-derived suite remains unchanged from the v0.8.8.3 security architecture; the full 8,192-case fuzz gate was not rerun in this re-versioning pass.
+- deterministic fuzz-derived endurance: **8,192/8,192 PASS**, 0 failure clusters, 0 catastrophic exits; maximum four-round chunk heap drift **92,448 B**.
 
 ## Result
 
 v0.8.8.4 is accepted because it improves the target ARM/Lua workload while preserving identical guest work in the deterministic fixed-frame gate. No timer-speed or gameplay-speed hack is used.
+
+## Hard-watchdog + long soak follow-up
+
+A post-release watchdog patch adds an absolute monotonic deadline to guest callbacks and checks it inside the interpreter every 4,096 guest instructions. `MreEventLoop` propagates the earlier of the overall run deadline and a 30-second per-callback hard wall, converting a hard-wall abort to `timedOut=true`.
+
+Validation:
+
+- infinite guest callback interrupted in **46.747 ms**, PASS;
+- stuck event-loop `vm_main` with 60 ms limit interrupted in **69.248 ms**, PASS;
+- same-JVM Chetaslua soak: **16 × 80 frames = 1,280 frames**, **7,177,391,200 instructions**, **0 timeout**, **0 crash**;
+- median FPS **5.442**, second-half median delta **+0.46%**;
+- end retained heap growth **230,184 B** vs **2,097,152 B** end-growth limit;
+- clean-room and Kotlin-only checks: PASS.
+
+See `HARD_WATCHDOG_SOAK_v0.8.8.4_REPORT.md` and `VXP-Core-v0.8.8.4-HARD-WATCHDOG.patch`.

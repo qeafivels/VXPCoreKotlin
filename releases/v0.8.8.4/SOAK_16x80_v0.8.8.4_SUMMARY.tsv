@@ -1,0 +1,2 @@
+version	cycles	frames_per_cycle	total_frames	total_instructions	median_fps	p95_fps	min_fps	max_fps	first_half_median_fps	second_half_median_fps	fps_half_delta_pct	median_mips	timeouts	crashes	signature	premeasure_heap	first_heap	min_heap	peak_heap	end_heap	steady_peak_drift	retained_span	end_growth	absolute_heap_limit	end_growth_limit	pass
+0.8.8.4	16	80	1280	7177391200	5.442	5.974	4.461	5.999	5.442	5.467	0.46	30.516	0	0	80/448586950/79/77/false	3265512	2746224	2746224	2976408	2976408	230184	230184	230184	67108864	2097152	true

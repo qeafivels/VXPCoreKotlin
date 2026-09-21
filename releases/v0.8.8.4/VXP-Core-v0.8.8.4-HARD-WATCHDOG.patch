@@ -1,0 +1,428 @@
+--- a/vxp-core/src/main/kotlin/vxpcore/ArmCpu.kt
++++ b/vxp-core/src/main/kotlin/vxpcore/ArmCpu.kt
+@@ -42,6 +42,14 @@
+         val maxBudgetGranted: Long
+     )
+ 
++    class GuestCallbackWallTimeoutException(
++        val function: Int,
++        val pc: Int,
++        val deadlineNs: Long
++    ) : RuntimeException(
++        "Guest callback hard wall deadline exceeded, function=0x${function.toUInt().toString(16)}, PC=0x${pc.toUInt().toString(16)}"
++    )
++
+     private var callbackCalls = 0L
+     private var callbackSoftLimitHits = 0L
+     private var callbackExtensions = 0L
+@@ -95,9 +103,15 @@
+      * r0-r3 follow AAPCS and are intentionally left with callback results/clobbers.
+      */
+     fun callGuest(function: Int, maxInstructions: Long = 2_000_000): Int =
+-        callGuestRegisters(function, 0, 0, 0, 0, 0, maxInstructions)
++        callGuestRegisters(function, 0, 0, 0, 0, 0, maxInstructions, Long.MAX_VALUE)
++
++    fun callGuest(function: Int, maxInstructions: Long, wallDeadlineNs: Long): Int =
++        callGuestRegisters(function, 0, 0, 0, 0, 0, maxInstructions, wallDeadlineNs)
++
++    fun callGuest(function: Int, args: IntArray, maxInstructions: Long = 2_000_000): Int =
++        callGuest(function, args, maxInstructions, Long.MAX_VALUE)
+ 
+-    fun callGuest(function: Int, args: IntArray, maxInstructions: Long = 2_000_000): Int {
++    fun callGuest(function: Int, args: IntArray, maxInstructions: Long, wallDeadlineNs: Long): Int {
+         require(args.size <= 4) { "callGuest currently supports up to four register arguments" }
+         return callGuestRegisters(
+             function,
+@@ -106,21 +120,34 @@
+             if (args.size > 1) args[1] else 0,
+             if (args.size > 2) args[2] else 0,
+             if (args.size > 3) args[3] else 0,
+-            maxInstructions
++            maxInstructions,
++            wallDeadlineNs
+         )
+     }
+ 
+     fun callGuest1(function: Int, a0: Int, maxInstructions: Long = 2_000_000): Int =
+-        callGuestRegisters(function, 1, a0, 0, 0, 0, maxInstructions)
++        callGuestRegisters(function, 1, a0, 0, 0, 0, maxInstructions, Long.MAX_VALUE)
++
++    fun callGuest1(function: Int, a0: Int, maxInstructions: Long, wallDeadlineNs: Long): Int =
++        callGuestRegisters(function, 1, a0, 0, 0, 0, maxInstructions, wallDeadlineNs)
+ 
+     fun callGuest2(function: Int, a0: Int, a1: Int, maxInstructions: Long = 2_000_000): Int =
+-        callGuestRegisters(function, 2, a0, a1, 0, 0, maxInstructions)
++        callGuestRegisters(function, 2, a0, a1, 0, 0, maxInstructions, Long.MAX_VALUE)
++
++    fun callGuest2(function: Int, a0: Int, a1: Int, maxInstructions: Long, wallDeadlineNs: Long): Int =
++        callGuestRegisters(function, 2, a0, a1, 0, 0, maxInstructions, wallDeadlineNs)
+ 
+     fun callGuest3(function: Int, a0: Int, a1: Int, a2: Int, maxInstructions: Long = 2_000_000): Int =
+-        callGuestRegisters(function, 3, a0, a1, a2, 0, maxInstructions)
++        callGuestRegisters(function, 3, a0, a1, a2, 0, maxInstructions, Long.MAX_VALUE)
++
++    fun callGuest3(function: Int, a0: Int, a1: Int, a2: Int, maxInstructions: Long, wallDeadlineNs: Long): Int =
++        callGuestRegisters(function, 3, a0, a1, a2, 0, maxInstructions, wallDeadlineNs)
+ 
+     fun callGuest4(function: Int, a0: Int, a1: Int, a2: Int, a3: Int, maxInstructions: Long = 2_000_000): Int =
+-        callGuestRegisters(function, 4, a0, a1, a2, a3, maxInstructions)
++        callGuestRegisters(function, 4, a0, a1, a2, a3, maxInstructions, Long.MAX_VALUE)
++
++    fun callGuest4(function: Int, a0: Int, a1: Int, a2: Int, a3: Int, maxInstructions: Long, wallDeadlineNs: Long): Int =
++        callGuestRegisters(function, 4, a0, a1, a2, a3, maxInstructions, wallDeadlineNs)
+ 
+     private fun callGuestRegisters(
+         function: Int,
+@@ -129,7 +156,8 @@
+         a1: Int,
+         a2: Int,
+         a3: Int,
+-        maxInstructions: Long
++        maxInstructions: Long,
++        wallDeadlineNs: Long
+     ): Int {
+         require(function != 0) { "Guest function address is null" }
+ 
+@@ -159,13 +187,22 @@
+         }
+         var currentBudget = maxInstructions
+         var adaptiveTailStartedNs = 0L
+-        var wallDeadlineNs = Long.MAX_VALUE
++        var adaptiveTailDeadlineNs = Long.MAX_VALUE
++        val hardWallEnabled = wallDeadlineNs != Long.MAX_VALUE
++        var nextHardWallCheckAt = startInstructions
+         callbackCalls++
+         if (currentBudget > callbackMaxBudgetGranted) callbackMaxBudgetGranted = currentBudget
+ 
+         try {
+             while (!halted && !runtime.exitRequested) {
+                 if ((r[15] and -2) == MreRuntime.HOST_RETURN_TRAP) break
++                if (hardWallEnabled && instructions >= nextHardWallCheckAt) {
++                    if (System.nanoTime() >= wallDeadlineNs) {
++                        callbackHardLimitFailures++
++                        throw GuestCallbackWallTimeoutException(function, r[15], wallDeadlineNs)
++                    }
++                    nextHardWallCheckAt = saturatingAdd(instructions, CALLBACK_HARD_WALL_CHECK_INTERVAL_INSTRUCTIONS)
++                }
+                 val used = instructions - startInstructions
+                 if (used >= currentBudget) {
+                     if (!adaptive || currentBudget >= hardBudget) {
+@@ -174,10 +211,10 @@
+                     }
+ 
+                     val now = System.nanoTime()
+-                    if (wallDeadlineNs == Long.MAX_VALUE) {
++                    if (adaptiveTailDeadlineNs == Long.MAX_VALUE) {
+                         adaptiveTailStartedNs = now
+-                        wallDeadlineNs = now + ADAPTIVE_CALLBACK_TAIL_WALL_NS
+-                    } else if (now >= wallDeadlineNs) {
++                        adaptiveTailDeadlineNs = now + ADAPTIVE_CALLBACK_TAIL_WALL_NS
++                    } else if (now >= adaptiveTailDeadlineNs) {
+                         callbackHardLimitFailures++
+                         val tailMs = (now - adaptiveTailStartedNs) / 1_000_000.0
+                         error("Guest callback adaptive wall watchdog exceeded (${String.format("%.1f", tailMs)}ms after soft limit), function=0x${function.toUInt().toString(16)}, PC=0x${r[15].toUInt().toString(16)}")
+@@ -1801,6 +1838,9 @@
+         return if (value > Long.MAX_VALUE / multiplier) Long.MAX_VALUE else value * multiplier
+     }
+ 
++    private fun saturatingAdd(value: Long, increment: Long): Long =
++        if (increment <= 0L || value >= Long.MAX_VALUE - increment) Long.MAX_VALUE else value + increment
++
+     companion object {
+         // Budgets below 20M stay strict so small watchdogs used by tests/tools keep exact semantics.
+         private const val ADAPTIVE_CALLBACK_MIN_SOFT_LIMIT = 20_000_000L
+@@ -1810,6 +1850,9 @@
+         // The clock is armed only after the soft budget is crossed. This keeps the
+         // common callback path allocation/clock-free while still bounding runaway tails.
+         private const val ADAPTIVE_CALLBACK_TAIL_WALL_NS = 8_000_000_000L
++        // Hard run deadlines are checked from inside guest callback execution so a callback
++        // cannot hide the event-loop timeout. Amortize nanoTime() to keep the hot path cheap.
++        private const val CALLBACK_HARD_WALL_CHECK_INTERVAL_INSTRUCTIONS = 4_096L
+     }
+ 
+ }
+--- a/vxp-core/src/main/kotlin/vxpcore/MreEventLoop.kt
++++ b/vxp-core/src/main/kotlin/vxpcore/MreEventLoop.kt
+@@ -6,6 +6,17 @@
+     private val maxInstructionsPerCallback: Long = 2_000_000L,
+     private val maxRuntimeMs: Long = 0L
+ ) {
++    private var suppliedRunDeadlineNs: Long = Long.MAX_VALUE
++
++    constructor(
++        cpu: ArmCpu,
++        runtime: MreRuntime,
++        maxInstructionsPerCallback: Long,
++        maxRuntimeMs: Long,
++        runDeadlineNs: Long
++    ) : this(cpu, runtime, maxInstructionsPerCallback, maxRuntimeMs) {
++        suppliedRunDeadlineNs = runDeadlineNs
++    }
+     data class Stats(
+         val eventsDispatched: Long,
+         val timerCallbacks: Long,
+@@ -15,106 +26,127 @@
+     fun run(vmMain: Int, invokeVmMain: Boolean = true): Stats {
+         require(vmMain != 0) { "vm_main/entry address is null" }
+ 
+-        if (invokeVmMain) {
+-            if (cpu.trace) println("[MRE] invoke vm_main @0x${vmMain.toUInt().toString(16)}")
+-            cpu.callGuest(vmMain, maxInstructionsPerCallback)
+-        } else if (cpu.trace) {
+-            println("[MRE] vm_main already invoked by ELF bootstrap")
+-        }
+-
+-        if (runtime.exitRequested) return Stats(0, 0, false)
+-
+-        if (runtime.systemCallback == 0) {
+-            System.err.println("[WARN] vm_main returned without vm_reg_sysevt_callback(); no CREATE/PAINT callback can be delivered")
+-            if (runtime.timerCount() == 0) return Stats(0, 0, false)
+-        } else {
+-            runtime.postSystemEvent(MreEventId.VM_MSG_CREATE, 0)
+-            runtime.postSystemEvent(MreEventId.VM_MSG_PAINT, 0)
+-        }
+-
+         val started = System.nanoTime()
++        val computedRunDeadlineNs = deadlineAfterMs(started, maxRuntimeMs)
++        val runDeadlineNs = minOf(suppliedRunDeadlineNs, computedRunDeadlineNs)
+         var eventsDispatched = 0L
+         var timerCallbacks = 0L
+         var timedOut = false
+ 
+-        while (!runtime.exitRequested && !cpu.halted) {
+-            if (maxRuntimeMs > 0L && (System.nanoTime() - started) / 1_000_000L >= maxRuntimeMs) {
+-                timedOut = true
+-                break
++        try {
++            if (invokeVmMain) {
++                if (cpu.trace) println("[MRE] invoke vm_main @0x${vmMain.toUInt().toString(16)}")
++                cpu.callGuest(vmMain, maxInstructionsPerCallback, callbackDeadlineNs(runDeadlineNs))
++            } else if (cpu.trace) {
++                println("[MRE] vm_main already invoked by ELF bootstrap")
+             }
+ 
+-            // Snapshot due timers first, then let pollEvent() prioritize already queued
+-            // keyboard/pen input ahead of the normal Timer/System queue. This preserves
+-            // timer phase while preventing a timer backlog from starving human input.
+-            runtime.enqueueDueTimers()
+-            val event = runtime.pollEvent()
+-            if (event != null) {
+-                when (event) {
+-                    is MreEvent.System -> {
+-                        val cb = runtime.systemCallback
+-                        if (cb != 0) {
+-                            if (cpu.trace) println("[EVT ] system message=${event.message} param=${event.param} cb=0x${cb.toUInt().toString(16)}")
+-                            cpu.callGuest2(cb, event.message, event.param, maxInstructionsPerCallback)
+-                            eventsDispatched++
++            if (runtime.exitRequested) return Stats(0, 0, false)
++
++            if (runtime.systemCallback == 0) {
++                System.err.println("[WARN] vm_main returned without vm_reg_sysevt_callback(); no CREATE/PAINT callback can be delivered")
++                if (runtime.timerCount() == 0) return Stats(0, 0, false)
++            } else {
++                runtime.postSystemEvent(MreEventId.VM_MSG_CREATE, 0)
++                runtime.postSystemEvent(MreEventId.VM_MSG_PAINT, 0)
++            }
++
++            while (!runtime.exitRequested && !cpu.halted) {
++                if (runDeadlineNs != Long.MAX_VALUE && System.nanoTime() >= runDeadlineNs) {
++                    timedOut = true
++                    break
++                }
++
++                runtime.enqueueDueTimers()
++                val event = runtime.pollEvent()
++                if (event != null) {
++                    val callbackDeadline = callbackDeadlineNs(runDeadlineNs)
++                    when (event) {
++                        is MreEvent.System -> {
++                            val cb = runtime.systemCallback
++                            if (cb != 0) {
++                                if (cpu.trace) println("[EVT ] system message=${event.message} param=${event.param} cb=0x${cb.toUInt().toString(16)}")
++                                cpu.callGuest2(cb, event.message, event.param, maxInstructionsPerCallback, callbackDeadline)
++                                eventsDispatched++
++                            }
+                         }
+-                    }
+-                    is MreEvent.Timer -> {
+-                        if (cpu.trace) println("[EVT ] timer id=${event.timerId} cb=0x${event.callback.toUInt().toString(16)}")
+-                        cpu.callGuest1(event.callback, event.timerId, maxInstructionsPerCallback)
+-                        eventsDispatched++
+-                        timerCallbacks++
+-                    }
+-                    is MreEvent.Keyboard -> {
+-                        val cb = runtime.keyboardCallback
+-                        if (cb != 0) {
+-                            if (cpu.trace) println("[EVT ] key event=${event.eventType} key=${event.keyCode} cb=0x${cb.toUInt().toString(16)}")
+-                            cpu.callGuest2(cb, event.eventType, event.keyCode, maxInstructionsPerCallback)
++                        is MreEvent.Timer -> {
++                            if (cpu.trace) println("[EVT ] timer id=${event.timerId} cb=0x${event.callback.toUInt().toString(16)}")
++                            cpu.callGuest1(event.callback, event.timerId, maxInstructionsPerCallback, callbackDeadline)
+                             eventsDispatched++
++                            timerCallbacks++
+                         }
+-                    }
+-                    is MreEvent.Pen -> {
+-                        val cb = runtime.penCallback
+-                        if (cb != 0) {
+-                            if (cpu.trace) println("[EVT ] pen event=${event.eventType} x=${event.x} y=${event.y} cb=0x${cb.toUInt().toString(16)}")
+-                            cpu.callGuest3(cb, event.eventType, event.x, event.y, maxInstructionsPerCallback)
+-                            eventsDispatched++
++                        is MreEvent.Keyboard -> {
++                            val cb = runtime.keyboardCallback
++                            if (cb != 0) {
++                                if (cpu.trace) println("[EVT ] key event=${event.eventType} key=${event.keyCode} cb=0x${cb.toUInt().toString(16)}")
++                                cpu.callGuest2(cb, event.eventType, event.keyCode, maxInstructionsPerCallback, callbackDeadline)
++                                eventsDispatched++
++                            }
+                         }
+-                    }
+-                    is MreEvent.GuestCallback -> {
+-                        if (event.callback != 0) {
+-                            if (cpu.trace) println("[EVT ] host callback cb=0x${event.callback.toUInt().toString(16)} argc=${event.args.size}")
+-                            cpu.callGuest(event.callback, event.args, maxInstructionsPerCallback)
+-                            eventsDispatched++
++                        is MreEvent.Pen -> {
++                            val cb = runtime.penCallback
++                            if (cb != 0) {
++                                if (cpu.trace) println("[EVT ] pen event=${event.eventType} x=${event.x} y=${event.y} cb=0x${cb.toUInt().toString(16)}")
++                                cpu.callGuest3(cb, event.eventType, event.x, event.y, maxInstructionsPerCallback, callbackDeadline)
++                                eventsDispatched++
++                            }
+                         }
+-                    }
+-                    is MreEvent.GuestCallbackFast -> {
+-                        if (event.callback != 0) {
+-                            if (cpu.trace) println("[EVT ] host callback-fast cb=0x${event.callback.toUInt().toString(16)} argc=${event.argc}")
+-                            when (event.argc) {
+-                                0 -> cpu.callGuest(event.callback, maxInstructionsPerCallback)
+-                                1 -> cpu.callGuest1(event.callback, event.a0, maxInstructionsPerCallback)
+-                                2 -> cpu.callGuest2(event.callback, event.a0, event.a1, maxInstructionsPerCallback)
+-                                3 -> cpu.callGuest3(event.callback, event.a0, event.a1, event.a2, maxInstructionsPerCallback)
+-                                4 -> cpu.callGuest4(event.callback, event.a0, event.a1, event.a2, event.a3, maxInstructionsPerCallback)
+-                                else -> error("GuestCallbackFast argc out of range: ${event.argc}")
++                        is MreEvent.GuestCallback -> {
++                            if (event.callback != 0) {
++                                if (cpu.trace) println("[EVT ] host callback cb=0x${event.callback.toUInt().toString(16)} argc=${event.args.size}")
++                                cpu.callGuest(event.callback, event.args, maxInstructionsPerCallback, callbackDeadline)
++                                eventsDispatched++
++                            }
++                        }
++                        is MreEvent.GuestCallbackFast -> {
++                            if (event.callback != 0) {
++                                if (cpu.trace) println("[EVT ] host callback-fast cb=0x${event.callback.toUInt().toString(16)} argc=${event.argc}")
++                                when (event.argc) {
++                                    0 -> cpu.callGuest(event.callback, maxInstructionsPerCallback, callbackDeadline)
++                                    1 -> cpu.callGuest1(event.callback, event.a0, maxInstructionsPerCallback, callbackDeadline)
++                                    2 -> cpu.callGuest2(event.callback, event.a0, event.a1, maxInstructionsPerCallback, callbackDeadline)
++                                    3 -> cpu.callGuest3(event.callback, event.a0, event.a1, event.a2, maxInstructionsPerCallback, callbackDeadline)
++                                    4 -> cpu.callGuest4(event.callback, event.a0, event.a1, event.a2, event.a3, maxInstructionsPerCallback, callbackDeadline)
++                                    else -> error("GuestCallbackFast argc out of range: ${event.argc}")
++                                }
++                                eventsDispatched++
+                             }
+-                            eventsDispatched++
+                         }
+                     }
++                    continue
+                 }
+-                continue
+-            }
+ 
+-            // MRE is event-driven. If nothing is ready, yield instead of burning a host CPU core.
+-            val waitNs = runtime.nanosUntilNextTimer()
+-            val sleepMs = when {
+-                waitNs == null -> 2L
+-                waitNs <= 0L -> 0L
+-                else -> (waitNs / 1_000_000L).coerceIn(1L, 5L)
++                val waitNs = runtime.nanosUntilNextTimer()
++                val sleepMs = when {
++                    waitNs == null -> 2L
++                    waitNs <= 0L -> 0L
++                    else -> (waitNs / 1_000_000L).coerceIn(1L, 5L)
++                }
++                if (sleepMs > 0L) Thread.sleep(sleepMs) else Thread.yield()
+             }
+-            if (sleepMs > 0L) Thread.sleep(sleepMs) else Thread.yield()
++        } catch (_: ArmCpu.GuestCallbackWallTimeoutException) {
++            timedOut = true
+         }
+ 
+         return Stats(eventsDispatched, timerCallbacks, timedOut)
+     }
++
++    private fun callbackDeadlineNs(runDeadlineNs: Long): Long {
++        val callbackDeadline = deadlineAfterMs(System.nanoTime(), CALLBACK_HARD_WALL_MS)
++        return minOf(runDeadlineNs, callbackDeadline)
++    }
++
++    private fun deadlineAfterMs(nowNs: Long, timeoutMs: Long): Long {
++        if (timeoutMs <= 0L) return Long.MAX_VALUE
++        val deltaNs = if (timeoutMs > Long.MAX_VALUE / 1_000_000L) Long.MAX_VALUE else timeoutMs * 1_000_000L
++        return if (deltaNs == Long.MAX_VALUE || nowNs >= Long.MAX_VALUE - deltaNs) Long.MAX_VALUE else nowNs + deltaNs
++    }
++
++    companion object {
++        // An individual guest callback must make forward progress even for otherwise unbounded runs.
++        // The overall run deadline, when configured, always wins if it is earlier.
++        private const val CALLBACK_HARD_WALL_MS = 30_000L
++    }
++
+ }
+--- /dev/null
++++ b/tests/jvm/GuestCallbackHardWallRegression.kt
+@@ -0,0 +1,24 @@
++package vxpcore
++
++import java.io.File
++
++fun main() {
++    val mem = GuestMemory()
++    mem.map(0x1000, 0x1000, read = true, write = true, exec = true)
++    val rt = MreRuntime(mem, File("/mnt/data/vxp-hard-wall-regression").apply { deleteRecursively(); mkdirs() })
++    val cpu = ArmCpu(mem, rt)
++
++    // ARM: B . (EAFFFFFE). A huge instruction budget would otherwise spin for a long time.
++    mem.write32(0x1000, 0xEAFFFFFE.toInt(), force = true)
++    val deadline = System.nanoTime() + 40_000_000L
++    val started = System.nanoTime()
++    val failure = runCatching {
++        cpu.callGuest(0x1000, 1_000_000_000L, deadline)
++    }.exceptionOrNull()
++    val elapsedMs = (System.nanoTime() - started) / 1_000_000.0
++
++    check(failure is ArmCpu.GuestCallbackWallTimeoutException) { "unexpected failure=$failure" }
++    check(elapsedMs < 2_000.0) { "hard wall did not interrupt promptly: ${elapsedMs}ms" }
++    check(cpu.callbackWatchdogStats().hardLimitFailures == 1L) { cpu.callbackWatchdogStats().toString() }
++    println("[OK] guest callback hard wall interrupted infinite callback in %.3f ms".format(elapsedMs))
++}
+--- /dev/null
++++ b/tests/jvm/EventLoopHardWatchdogRegression.kt
+@@ -0,0 +1,27 @@
++package vxpcore
++
++import java.io.File
++
++fun main() {
++    val mem = GuestMemory()
++    mem.map(0x1000, 0x1000, read = true, write = true, exec = true)
++    val rt = MreRuntime(mem, File("/mnt/data/vxp-eventloop-hard-wall-regression").apply { deleteRecursively(); mkdirs() })
++    val cpu = ArmCpu(mem, rt)
++
++    // vm_main is deliberately stuck in ARM `B .`. Event-loop maxRuntimeMs must be
++    // enforceable while the callback is still executing, not only after it returns.
++    mem.write32(0x1000, 0xEAFFFFFE.toInt(), force = true)
++    val started = System.nanoTime()
++    val stats = MreEventLoop(
++        cpu = cpu,
++        runtime = rt,
++        maxInstructionsPerCallback = 1_000_000_000L,
++        maxRuntimeMs = 60L
++    ).run(0x1000)
++    val elapsedMs = (System.nanoTime() - started) / 1_000_000.0
++
++    check(stats.timedOut) { "event loop did not report timeout: $stats" }
++    check(elapsedMs < 2_000.0) { "event-loop hard wall did not interrupt promptly: ${elapsedMs}ms" }
++    check(cpu.callbackWatchdogStats().hardLimitFailures == 1L) { cpu.callbackWatchdogStats().toString() }
++    println("[OK] event-loop hard watchdog interrupted stuck vm_main in %.3f ms".format(elapsedMs))
++}

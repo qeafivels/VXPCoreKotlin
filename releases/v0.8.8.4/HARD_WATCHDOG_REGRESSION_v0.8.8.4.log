@@ -1,0 +1,12 @@
+[PASS] AdaptiveCallbackWatchdogRegression: valid >20M callback extended; low explicit budgets remain strict.
+[PASS] GuestCallbackHardWallRegression: infinite ARM B . interrupted in 46.747 ms.
+[PASS] EventLoopHardWatchdogRegression: stuck vm_main interrupted in 69.248 ms, timedOut=true.
+[PASS] BasicBlockDecodeCacheRegression: ARM/Thumb cache + executable-write invalidation.
+[PASS] InBlockSelfModifyRegression: stale cached opcode not executed after executable write.
+[PASS] FastGuestCallbackRegression: legacy + allocation-light callback ABI.
+[PASS] GuestMemoryFastPathRegression.
+[PASS] GuestMemoryDirectRegionRegression.
+[PASS] InputPriorityRegression.
+[PASS] FnynnTimerVibratorRegression.
+[PASS] verify_clean_room.sh: clean-room Kotlin-only runtime source checks passed.
+[PASS] verify_kotlin_only.sh: no JNI/NDK/C/C++.

@@ -89,6 +89,8 @@ Validation on Chetaslua SHA-256 `9e7ce08d33f5f6caccf446a1ca6db4ee91c39eacd38b05f
 
 The full deterministic fuzz-derived endurance suite was subsequently rerun: **8,192/8,192 PASS**, **0 failure clusters**, **0 catastrophic exits**, with maximum four-round chunk heap drift **92,448 B** against a **12,582,912 B** ceiling. See `releases/v0.8.8.4/FUZZ_DERIVED_FULL_v0.8.8.4_REPORT.md`. Release materials are under `releases/v0.8.8.4/`; the benchmark binary is not committed.
 
+Hard-watchdog follow-up: stuck guest callbacks are now bounded by an in-interpreter wall deadline. The same-JVM **16 × 80-frame** Chetaslua soak passed **16/16 cycles**, **1,280 frames**, **0 timeout**, **0 crash**, median **5.442 FPS**, second-half median **+0.46%**, and **230,184 B** end retained heap growth. See `releases/v0.8.8.4/HARD_WATCHDOG_SOAK_v0.8.8.4_REPORT.md`.
+
 ## Supported backends
 
 | VXP type | Backend | Status |
