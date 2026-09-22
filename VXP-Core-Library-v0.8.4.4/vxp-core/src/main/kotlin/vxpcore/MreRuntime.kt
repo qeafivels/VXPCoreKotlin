@@ -2,6 +2,7 @@ package vxpcore
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.io.File
+import java.util.Calendar
 import kotlin.math.max
 
 class MreRuntime(
@@ -338,9 +339,35 @@ class MreRuntime(
             // any host/device identifier; keep a deterministic guest-owned value.
             cpu.r[0] = systemAscii("imei", "000000000000000")
         }
+        api("vm_get_imsi") { cpu ->
+            // Keep subscriber identity synthetic as well: guest code gets a stable
+            // ASCII IMSI-shaped value, never host SIM/subscriber information.
+            cpu.r[0] = systemAscii("imsi", "001010000000000")
+        }
+        api("vm_sim_card_count") { it.r[0] = 1 }
+        api("vm_get_time") { cpu ->
+            val out = arg(cpu, 0)
+            if (out == 0 || !memory.isMapped(out, 24)) {
+                cpu.r[0] = -1
+            } else {
+                val now = Calendar.getInstance()
+                memory.write32(out + 0, now.get(Calendar.YEAR))
+                memory.write32(out + 4, now.get(Calendar.MONTH) + 1)
+                memory.write32(out + 8, now.get(Calendar.DAY_OF_MONTH))
+                memory.write32(out + 12, now.get(Calendar.HOUR_OF_DAY))
+                memory.write32(out + 16, now.get(Calendar.MINUTE))
+                memory.write32(out + 20, now.get(Calendar.SECOND))
+                cpu.r[0] = 0
+            }
+        }
         api("vm_get_vm_tag") { cpu -> cpu.r[0] = systemAscii("vm_tag", "MRE") }
         api("vm_is_support_wifi") { it.r[0] = 0 }
         api("vm_wifi_is_connected") { it.r[0] = 0 }
+        // Network transport is intentionally host-sandboxed in the core. Return a
+        // real failure instead of a generic compatibility-stub success so browser
+        // guests can enter their offline/error path deterministically.
+        api("vm_tcp_connect") { it.r[0] = -1 }
+        api("vm_tcp_close") { it.r[0] = 0 }
         api("vm_has_sim_card") { it.r[0] = 1 }
         api("vm_get_sim_card_status") { it.r[0] = 1 }
         api("vm_sim_get_active_sim_card") { it.r[0] = 0 }
@@ -482,6 +509,36 @@ class MreRuntime(
             cpu.r[0] = graphics.drawLineBuffer(arg(cpu, 0), arg(cpu, 1), arg(cpu, 2), arg(cpu, 3), arg(cpu, 4), c)
         }
         api("vm_graphic_rect") { cpu -> cpu.r[0] = graphics.drawRect(arg(cpu, 0), arg(cpu, 1), arg(cpu, 2), arg(cpu, 3)) }
+        api("vm_graphic_measure_character") { cpu ->
+            val widthPtr = arg(cpu, 1)
+            val heightPtr = arg(cpu, 2)
+            if (widthPtr == 0 || heightPtr == 0 || !memory.isMapped(widthPtr, 4) || !memory.isMapped(heightPtr, 4)) {
+                cpu.r[0] = -1
+            } else {
+                memory.write32(widthPtr, graphics.characterWidth(arg(cpu, 0)))
+                memory.write32(heightPtr, graphics.characterHeight())
+                cpu.r[0] = 0
+            }
+        }
+        api("vm_graphic_roundrect") { cpu ->
+            // Compatibility raster: preserve the raw-buffer ABI and clipping.
+            // Corner radius is intentionally approximated by the rectangular frame
+            // until an independently validated pixel-exact round-corner contract is needed.
+            val buffer = arg(cpu, 0)
+            val x = arg(cpu, 1); val y = arg(cpu, 2)
+            val width = arg(cpu, 3); val height = arg(cpu, 4)
+            val color = decodeColorArg(arg(cpu, 6))
+            if (width <= 0 || height <= 0) {
+                cpu.r[0] = 0
+            } else {
+                val x1 = x + width - 1; val y1 = y + height - 1
+                val a = graphics.drawLineBuffer(buffer, x, y, x1, y, color)
+                val b = graphics.drawLineBuffer(buffer, x, y, x, y1, color)
+                val c = graphics.drawLineBuffer(buffer, x1, y, x1, y1, color)
+                val d = graphics.drawLineBuffer(buffer, x, y1, x1, y1, color)
+                cpu.r[0] = if (a < 0 || b < 0 || c < 0 || d < 0) -1 else 0
+            }
+        }
         api("vm_graphic_get_character_width") { cpu ->
             cpu.r[0] = graphics.characterWidth(arg(cpu, 0))
         }
