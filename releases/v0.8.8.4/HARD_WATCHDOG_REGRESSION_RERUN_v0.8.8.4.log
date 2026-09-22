@@ -1,0 +1,8 @@
+[OK] adaptive callback watchdog: valid >20M callback extended; small watchdog stayed strict
+[STAT] CallbackWatchdogStats(calls=1, softLimitHits=1, extensions=1, hardLimitFailures=0, maxInstructionsInCallback=22000001, maxAdaptiveTailMs=19.149267, maxBudgetGranted=40000000)
+[OK] v0.8.7.2 ARM/Thumb basic-block cache + executable-write invalidation
+[STAT] DecodeCacheStats(armMisses=0, thumbMisses=2, blockFills=2, invalidations=2)
+[OK] in-block executable write stops stale cached opcode; r2=2 stats=DecodeCacheStats(armMisses=2, thumbMisses=0, blockFills=2, invalidations=1)
+[OK] legacy GuestCallback ABI + allocation-light GuestCallbackFast path
+OK: clean-room Kotlin-only runtime source checks passed.
+OK: vxp-core + vxp-core-android are Kotlin-only (no JNI/NDK/C/C++).

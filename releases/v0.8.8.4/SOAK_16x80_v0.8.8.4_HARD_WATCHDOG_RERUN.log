@@ -1,0 +1,20 @@
+SOAK_WARMUP index=0 ms=7683.259 fps=10.412 mips=58.385 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3316816
+SOAK_WARMUP index=1 ms=9092.308 fps=8.799 mips=49.337 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3044496
+SOAK_WARMUP index=2 ms=9028.945 fps=8.860 mips=49.683 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3044544
+SOAK_CYCLE index=0 ms=7313.822 fps=10.938 mips=61.334 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3045192 premeasure_drift=4720
+SOAK_CYCLE index=1 ms=7300.504 fps=10.958 mips=61.446 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3046240 premeasure_drift=5768
+SOAK_CYCLE index=2 ms=8220.481 fps=9.732 mips=54.569 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3046376 premeasure_drift=5904
+SOAK_CYCLE index=3 ms=7413.363 fps=10.791 mips=60.511 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3046520 premeasure_drift=6048
+SOAK_CYCLE index=4 ms=7473.450 fps=10.705 mips=60.024 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3046816 premeasure_drift=6344
+SOAK_CYCLE index=5 ms=8063.547 fps=9.921 mips=55.631 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3046904 premeasure_drift=6432
+SOAK_CYCLE index=6 ms=7404.003 fps=10.805 mips=60.587 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3046992 premeasure_drift=6520
+SOAK_CYCLE index=7 ms=7741.335 fps=10.334 mips=57.947 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3047080 premeasure_drift=6608
+SOAK_CYCLE index=8 ms=7628.811 fps=10.487 mips=58.802 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3047168 premeasure_drift=6696
+SOAK_CYCLE index=9 ms=7423.849 fps=10.776 mips=60.425 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3047256 premeasure_drift=6784
+SOAK_CYCLE index=10 ms=7381.874 fps=10.837 mips=60.769 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3047344 premeasure_drift=6872
+SOAK_CYCLE index=11 ms=10838.012 fps=7.381 mips=41.390 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3047456 premeasure_drift=6984
+SOAK_CYCLE index=12 ms=7812.102 fps=10.241 mips=57.422 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3047544 premeasure_drift=7072
+SOAK_CYCLE index=13 ms=7447.339 fps=10.742 mips=60.235 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3047632 premeasure_drift=7160
+SOAK_CYCLE index=14 ms=7425.693 fps=10.773 mips=60.410 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3047720 premeasure_drift=7248
+SOAK_CYCLE index=15 ms=8128.362 fps=9.842 mips=55.188 frames=80 instructions=448586950 events=79 timers=77 timeout=false heap_after=3047808 premeasure_drift=7336
+SOAK_RESULT version=0.8.8.4 cycles=16 frames_per_cycle=80 total_frames=1280 total_instructions=7177391200 median_fps=10.723 p95_fps=10.938 min_fps=7.381 max_fps=10.958 first_half_median_fps=10.748 second_half_median_fps=10.614 fps_half_delta_pct=-1.24 median_mips=60.129 timeouts=0 crashes=0 signature=80/448586950/79/77/false premeasure_heap=3040472 first_heap=3045192 min_heap=3045192 peak_heap=3047808 end_heap=3047808 steady_peak_drift=2616 retained_span=2616 end_growth=2616 absolute_heap_limit=67108864 end_growth_limit=2097152 pass=true
