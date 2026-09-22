@@ -148,7 +148,8 @@ class Elf32Arm private constructor(
 
         for (p in loads) {
             require(p.filesz >= 0 && p.memsz >= p.filesz) { "Invalid PT_LOAD sizes" }
-            require(p.offset >= 0 && p.offset.toLong() + p.filesz <= bytes.size.toLong()) { "PT_LOAD outside file" }
+            val sourceOffset = correctedLoadOffset(p)
+            require(sourceOffset >= 0 && sourceOffset.toLong() + p.filesz <= bytes.size.toLong()) { "PT_LOAD outside file" }
             val start = pageDown(p.vaddr + loadBias)
             val end = pageUp(p.vaddr + loadBias + p.memsz)
             val size = end - start
@@ -156,11 +157,71 @@ class Elf32Arm private constructor(
             val write = (p.flags and 2) != 0
             val exec = (p.flags and 1) != 0
             if (!memory.isMapped(start, size)) memory.map(start, size, read = read || exec, write = write, exec = exec)
-            if (p.filesz > 0) memory.writeBytes(p.vaddr + loadBias, bytes, p.offset, p.filesz, force = true)
+            if (p.filesz > 0) memory.writeBytes(p.vaddr + loadBias, bytes, sourceOffset, p.filesz, force = true)
             imageStart = minOf(imageStart, start)
             imageEnd = maxOf(imageEnd, end)
         }
         return Loaded(entry + loadBias, loadBias, imageStart, imageEnd)
+    }
+
+    /**
+     * Some legacy ARM/ADS-produced VXP ELF files contain a PT_LOAD whose file offset
+     * points at the ELF metadata even though the executable section that owns e_entry
+     * starts later in the file. Loading that segment literally makes the CPU execute
+     * section/program headers before reaching the real entry code.
+     *
+     * A conforming ELF has identical file offsets for an address whether calculated
+     * through PT_LOAD or through the executable SHF_ALLOC section. When they disagree,
+     * prefer the section mapping only for the PT_LOAD that contains e_entry, and only
+     * when the corrected full segment still fits in the file. This keeps normal ELF
+     * behavior unchanged while accepting the legacy scatter-loaded layout.
+     */
+    private fun correctedLoadOffset(p: ElfProgramHeader): Int {
+        val entryU = entry.toUInt().toLong()
+        val pStart = p.vaddr.toUInt().toLong()
+        val pEnd = pStart + p.memsz.toLong()
+        if (entryU !in pStart until pEnd) return p.offset
+
+        val entrySection = sections.firstOrNull { sec ->
+            val start = sec.addr.toUInt().toLong()
+            val end = start + sec.size.toLong()
+            sec.type != 8 &&
+                (sec.flags and 0x2) != 0 && // SHF_ALLOC
+                (sec.flags and 0x4) != 0 && // SHF_EXECINSTR
+                sec.size > 0 && entryU in start until end
+        } ?: return p.offset
+
+        val segmentEntryOffset = p.offset.toLong() + (entryU - pStart)
+        val sectionStart = entrySection.addr.toUInt().toLong()
+        val sectionEntryOffset = entrySection.offset.toLong() + (entryU - sectionStart)
+        val correction = sectionEntryOffset - segmentEntryOffset
+        if (correction == 0L) return p.offset
+
+        val corrected = p.offset.toLong() + correction
+        val correctedEnd = corrected + p.filesz.toLong()
+        if (corrected < 0L || correctedEnd > bytes.size.toLong()) return p.offset
+
+        return corrected.toInt()
+    }
+
+    /**
+     * ARM/ADS RWPI images may describe writable sections as offsets from r9/SB
+     * instead of fixed virtual addresses. A zero-based writable SHF_ALLOC range
+     * is the observable signature used by the legacy MRE scatter loader.
+     */
+    fun relativeStaticDataSize(): Int {
+        val writable = sections.filter { sec ->
+            sec.size > 0 && (sec.flags and 0x2) != 0 && (sec.flags and 0x1) != 0
+        }
+        if (writable.none { it.addr == 0 }) return 0
+        var maxEnd = 0L
+        for (sec in writable) {
+            val start = sec.addr.toUInt().toLong()
+            val end = start + sec.size.toLong()
+            if (end > 0x01000000L) return 0
+            maxEnd = maxOf(maxEnd, end)
+        }
+        return maxEnd.toInt()
     }
 
     fun undefinedSymbols(): Set<String> {
