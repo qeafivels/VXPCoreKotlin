@@ -147,9 +147,31 @@ class VxpCoreEngine(
         val elf = Elf32Arm.parse(payload.elf)
         val memory = GuestMemory()
         val loaded = elf.load(memory)
+        val relativeStaticDataSize = elf.relativeStaticDataSize()
+        if (relativeStaticDataSize > 0) {
+            val staticRegionSize = alignUp(0x100 + relativeStaticDataSize, 0x1000)
+            memory.map(DATA_REGION_BASE, staticRegionSize, read = true, write = true, exec = false)
+            if (trace) println("[ELF ] RWPI static base=0x${DATA_BASE.toUInt().toString(16)} size=${relativeStaticDataSize}")
+        }
         val rt = newRuntime(memory, fileName)
         runtime = rt
         rt.rawExecutableName = fileName
+        if (relativeStaticDataSize > 0) {
+            // Legacy ARMCC/RVCT MRE loaders provide a small control block directly
+            // below r9/SB. The C runtime reads these words before vm_main:
+            //   SB-0x80 saved startup stack, SB-0x7c vm_get_sym_entry,
+            //   SB-0x78 heap base, SB-0x74 heap limit, SB-0x70 stack size.
+            // Keep the block host-owned and outside the guest RW/ZI image.
+            val startupFrame = MreRuntime.STACK_BASE + MreRuntime.STACK_SIZE - 16
+            memory.write32(DATA_BASE - 0x80, startupFrame)
+            memory.write32(DATA_BASE - 0x7c, rt.resolverAddress)
+            memory.write32(DATA_BASE - 0x78, MreRuntime.HEAP_BASE)
+            memory.write32(DATA_BASE - 0x74, MreRuntime.HEAP_BASE + MreRuntime.HEAP_SIZE)
+            memory.write32(DATA_BASE - 0x70, MreRuntime.STACK_SIZE)
+            // __rt_exit restores this loader frame with POP {r0,pc}.
+            memory.write32(startupFrame, 0)
+            memory.write32(startupFrame + 4, MreRuntime.HOST_RETURN_TRAP)
+        }
         rt.graphics.onFrame = onFrame
         elf.sections.firstOrNull { it.name == ".vm_res" && it.size > 0 }?.let { sec ->
             require(sec.offset >= 0 && sec.size >= 0 && sec.offset.toLong() + sec.size <= elf.bytes.size.toLong())
@@ -168,7 +190,8 @@ class VxpCoreEngine(
         val c = ArmCpu(memory, rt, trace)
         cpu = c
 
-        val bootstrappedByEntry = gccEntry != null
+        val legacyRwpiEntry = gccEntry == null && relativeStaticDataSize > 0
+        val bootstrappedByEntry = gccEntry != null || legacyRwpiEntry
         if (gccEntry != null) {
             // GCC-based MRE VXP binaries are entered through gcc_entry, not vm_main.
             // ABI observed in real VXP builds:
@@ -185,6 +208,14 @@ class VxpCoreEngine(
             c.callGuest(gccEntry, intArrayOf(rt.resolverAddress, initArray, initCount), maxInstructionsPerCallback)
         } else {
             c.reset(loaded.entry)
+            if (relativeStaticDataSize > 0) c.r[9] = DATA_BASE
+            if (legacyRwpiEntry) {
+                // RVCT/ADS MRE entry stubs receive vm_get_sym_entry in r0, store it
+                // in r9-relative static data, run scatter initialization, then call
+                // the application's vm_main body.
+                if (trace) println("[ELF ] RWPI entry resolver=0x${rt.resolverAddress.toUInt().toString(16)}")
+                c.callGuest(loaded.entry, intArrayOf(rt.resolverAddress), maxInstructionsPerCallback)
+            }
         }
 
         val stats = MreEventLoop(c, rt, maxInstructionsPerCallback, maxRuntimeMs).run(vmMain, invokeVmMain = !bootstrappedByEntry)
