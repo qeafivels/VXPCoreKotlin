@@ -1,0 +1,26 @@
+name: Export DMAX compatibility source
+
+on:
+  push:
+    branches:
+      - chatgpt/dmax-compat-test
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Package source and release deltas
+        run: |
+          mkdir -p out
+          tar -czf out/vxpcore-dmax-source.tgz             VXP-Core-Library-v0.8.4.4             releases/v0.8.9             releases/v0.8.9.1             releases/v0.8.9.2             scripts             README.md             VERSIONS.md
+
+      - name: Upload source bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: vxpcore-dmax-source
+          path: out/vxpcore-dmax-source.tgz
+          if-no-files-found: error
