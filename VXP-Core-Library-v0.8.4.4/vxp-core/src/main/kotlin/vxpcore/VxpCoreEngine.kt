@@ -210,11 +210,11 @@ class VxpCoreEngine(
             c.reset(loaded.entry)
             if (relativeStaticDataSize > 0) c.r[9] = DATA_BASE
             if (legacyRwpiEntry) {
-                // RVCT/ADS MRE entry stubs receive vm_get_sym_entry in r0, store it
-                // in r9-relative static data, run scatter initialization, then call
-                // the application's vm_main body.
-                if (trace) println("[ELF ] RWPI entry resolver=0x${rt.resolverAddress.toUInt().toString(16)}")
-                c.callGuest(loaded.entry, intArrayOf(rt.resolverAddress), maxInstructionsPerCallback)
+                // The legacy loader metadata below r9 carries the resolver and
+                // memory bounds. Run the ELF startup/scatter entry once; it will
+                // initialize RW/ZI and enter the application's vm_main body.
+                if (trace) println("[ELF ] RWPI startup @0x${loaded.entry.toUInt().toString(16)} resolver=0x${rt.resolverAddress.toUInt().toString(16)}")
+                c.callGuest(loaded.entry, intArrayOf(), maxInstructionsPerCallback)
             }
         }
 
