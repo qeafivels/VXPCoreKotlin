@@ -1,0 +1,27 @@
+name: Export VXPCore test JAR
+
+on:
+  push:
+    branches:
+      - chatgpt/veridian-vxpcore-test
+    paths:
+      - .github/workflows/export-vxpcore-test-jar.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify JAR
+        run: |
+          set -eux
+          ls -lh VXP-Core-Library-v0.8.4.4/dist/vxp-core-0.8.4.4.jar
+          sha256sum VXP-Core-Library-v0.8.4.4/dist/vxp-core-0.8.4.4.jar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vxpcore-0.8.4.4-jar
+          path: VXP-Core-Library-v0.8.4.4/dist/vxp-core-0.8.4.4.jar
+          if-no-files-found: error
